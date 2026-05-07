@@ -2120,9 +2120,9 @@ body{
   background:var(--white);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:24px;margin-bottom:32px;box-shadow:var(--card-shadow);
 }
 .work-tracker-title{font-size:16px;font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.work-tracker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.work-tracker-card{background:var(--off);border-radius:var(--radius-sm);padding:16px;text-align:center;transition:transform 0.2s,box-shadow 0.2s;}
-.work-tracker-card:hover{transform:translateY(-2px);box-shadow:var(--hover-shadow);}
+.work-tracker-grid{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;}
+.work-tracker-grid::-webkit-scrollbar{display:none;}
+.work-tracker-card{background:var(--off);border-radius:var(--radius-sm);padding:16px;text-align:center;transition:transform 0.2s,box-shadow 0.2s;flex:1;min-width:140px;scroll-snap-align:start;}
 .wt-icon{font-size:24px;margin-bottom:6px;}
 .wt-num{font-size:26px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--black);}
 .wt-label{font-size:11px;color:var(--mid);margin-top:4px;font-weight:500;}
@@ -2161,7 +2161,6 @@ body{
 .report-tab.active{color:var(--black);border-bottom:2px solid var(--black);}
 
 @media(max-width:768px){
-  .work-tracker-grid{grid-template-columns:repeat(2,1fr);}
   .report-kpi-grid{grid-template-columns:repeat(2,1fr);}
   .report-modal{max-width:100%;}
   .month-cal-cell{min-height:70px;padding:4px;}
@@ -5287,8 +5286,7 @@ function renderWorkTracker() {
   // Calculate avg per day
   const avgHoursPerDay = daysWorked > 0 ? (hoursWorked / daysWorked).toFixed(1) : '0';
   
-  // Use 5-column grid when there are cancellations
-  grid.style.gridTemplateColumns = cancelledThisMonth > 0 ? 'repeat(5,1fr)' : 'repeat(4,1fr)';
+  // CSS flexbox automatically handles the 4 or 5 cards smoothly
   
   grid.innerHTML = `
     <div class="work-tracker-card">
