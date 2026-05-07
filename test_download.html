@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button onclick="testBlob()">Test Blob</button>
+<button onclick="testData()">Test Data URI</button>
+<script>
+function testBlob() {
+  const blob = new Blob(['hello world'], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'test_blob.txt';
+  a.click();
+}
+function testData() {
+  const data = 'data:text/plain;base64,aGVsbG8gd29ybGQ=';
+  const a = document.createElement('a');
+  a.href = data;
+  a.download = 'test_data.txt';
+  a.click();
+}
+</script>
+</body>
+</html>

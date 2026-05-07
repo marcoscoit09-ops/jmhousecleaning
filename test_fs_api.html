@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button onclick="testSave()">Test File System API</button>
+<script>
+async function testSave() {
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'test_report.pdf',
+      types: [{
+        description: 'PDF File',
+        accept: {'application/pdf': ['.pdf']},
+      }],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(new Blob(['hello'], {type: 'application/pdf'}));
+    await writable.close();
+    alert('Success!');
+  } catch (err) {
+    alert('Error: ' + err.name);
+  }
+}
+</script>
+</body>
+</html>

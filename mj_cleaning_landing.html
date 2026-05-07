@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
+<meta http-equiv="Content-Language" content="de">
+<title>J&M House Cleaning München – Professionelle Haushaltsreinigung | Professional Home Cleaning</title>
+<meta name="description" content="J&M House Cleaning bietet professionelle Haushaltsreinigung in München. Zuverlässig, versichert und direkt buchbar. Professional cleaning service in Munich – book directly via WhatsApp, SMS or email.">
+<meta name="keywords" content="Reinigung München, Haushaltsreinigung München, cleaning service Munich, Tiefenreinigung München, Reinigungsservice München, home cleaning Munich, deep cleaning Munich, Endreinigung München">
+<meta property="og:title" content="J&M House Cleaning München – Professionelle Reinigung">
+<meta property="og:description" content="Zuverlässige Haushaltsreinigung in München. Direkt buchbar, versichert, persönlicher Service.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+<!-- ===== CONFIGURACIÓN — EDITAR AQUÍ ===== -->
+<script>
+  const CONFIG = {
+    whatsapp: "491782662613",    // ← tu número WhatsApp sin + ni espacios
+    gmail: "jm.hosuecleaning@gmail.com",  // ← tu Gmail
+    whatsappMsg: "Hola! Me interesa su servicio de limpieza en München.",
+    // Webhook nativo de Google Sheets (Apps Script) o n8n
+    sheetWebhook: "https://script.google.com/macros/s/AKfycbwvwIYwkT81nlJYN6FKnxF_wbPiFTE1OoUisQPECzgADzOt5g-5tb0yXZGEO0n9zvvYqQ/exec"
+  };
+</script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;scroll-behavior:smooth}
+:root{
+  --white:#ffffff;
+  --off:#F3F8FB;
+  --black:#0A192F;
+  --mid:#5A7184;
+  --light:#E1EBF0;
+  --accent:#00968F;
+  --accent-light:#E0F5F4;
+  --accent2:#F0F7FA;
+}
+body{font-family:'DM Sans',sans-serif;color:var(--black);background:var(--white);line-height:1.6;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--light);padding:0 40px;display:flex;justify-content:space-between;align-items:center;height:68px;transition:box-shadow .3s}
+nav.scrolled{box-shadow:0 2px 20px rgba(10,25,47,.06)}
+.nav-brand{display:flex;align-items:center;gap:0;font-family:'Playfair Display',serif;font-size:20px;font-weight:400}
+.nav-brand img{height:56px;width:auto}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-size:13px;color:var(--mid);transition:color .25s;position:relative}
+.nav-links a:hover{color:var(--black)}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1.5px;background:var(--accent);transition:width .3s}
+.nav-links a:hover::after{width:100%}
+.nav-cta{background:var(--accent);color:var(--white)!important;padding:9px 22px;border-radius:6px;font-size:13px!important;transition:all .25s;box-shadow:0 2px 8px rgba(0,150,143,.2)}
+.nav-cta::after{display:none!important}
+.nav-cta:hover{background:#007d77;transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,150,143,.3)}
+.lang-toggle{display:flex;gap:4px;margin-left:16px}
+.lang-btn{background:none;border:1px solid var(--light);padding:4px 12px;border-radius:20px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--mid);transition:all .25s}
+.lang-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:1.5px;background:var(--black);margin:5px 0;transition:.3s}
+
+/* MOBILE NAV */
+.mobile-menu{display:none;position:fixed;top:68px;left:0;right:0;background:rgba(255,255,255,.98);backdrop-filter:blur(12px);border-bottom:1px solid var(--light);padding:24px 40px;z-index:99;flex-direction:column;gap:20px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:15px;color:var(--mid);padding:8px 0;border-bottom:1px solid var(--light)}
+
+/* HERO */
+.hero{margin-top:68px;display:grid;grid-template-columns:1fr 1fr;min-height:92vh}
+.hero-left{display:flex;flex-direction:column;justify-content:center;padding:80px 60px 80px 40px;border-right:1px solid var(--light)}
+.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;display:flex;align-items:center;gap:10px;font-weight:500}
+.eyebrow::before{content:'';display:inline-block;width:24px;height:1.5px;background:var(--accent)}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(38px,4.5vw,68px);font-weight:400;line-height:1.1;margin-bottom:28px}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:16px;color:var(--mid);max-width:420px;margin-bottom:48px;line-height:1.8}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.btn-primary{background:var(--black);color:var(--white);border:none;padding:14px 28px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(10,25,47,.12)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(10,25,47,.18)}
+.btn-wa{background:#25D366;color:var(--white);border:none;padding:14px 28px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .25s;box-shadow:0 2px 8px rgba(37,211,102,.2)}
+.btn-wa:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,211,102,.3);background:#1fbd5a}
+.btn-ghost{background:none;color:var(--black);border:1px solid var(--light);padding:14px 28px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all .25s}
+.btn-ghost:hover{background:var(--black);color:var(--white);border-color:var(--black);transform:translateY(-1px)}
+.hero-right{position:relative;overflow:hidden;background:var(--off)}
+.hero-img{width:100%;height:100%;object-fit:cover;min-height:500px;transition:transform 8s ease}
+.hero-right:hover .hero-img{transform:scale(1.03)}
+.hero-badge{position:absolute;bottom:32px;left:32px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid var(--light);padding:20px 24px;border-radius:8px;max-width:240px;box-shadow:0 4px 20px rgba(10,25,47,.08)}
+.badge-num{font-family:'Playfair Display',serif;font-size:36px;color:var(--accent)}
+.badge-txt{font-size:12px;color:var(--mid);margin-top:4px}
+
+/* TRUST BAR */
+.trust-bar{background:var(--off);border-top:1px solid var(--light);border-bottom:1px solid var(--light);padding:24px 40px;display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mid);font-weight:500}
+.trust-icon{font-size:18px;color:var(--accent)}
+
+/* ABOUT */
+.about{padding:100px 40px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.about-img-wrap{position:relative}
+.about-img{width:100%;height:480px;object-fit:cover;border-radius:8px;box-shadow:0 8px 30px rgba(10,25,47,.08)}
+.about-tag{position:absolute;top:32px;right:-20px;background:var(--accent);color:var(--white);padding:16px 24px;font-size:13px;line-height:1.5;max-width:180px;border-radius:6px;box-shadow:0 4px 14px rgba(0,150,143,.25)}
+.about-right .eyebrow{margin-bottom:16px}
+.about-title{font-family:'Playfair Display',serif;font-size:clamp(28px,3vw,44px);line-height:1.2;margin-bottom:24px}
+.about-body{font-size:15px;color:var(--mid);line-height:1.85;margin-bottom:32px}
+.about-sign{font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--accent)}
+
+/* SERVICES */
+.services{padding:100px 40px;background:var(--off)}
+.section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:56px;padding-bottom:24px;border-bottom:1px solid var(--light)}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(28px,3vw,44px);font-weight:400;line-height:1.2}
+.section-sub{font-size:14px;color:var(--mid);max-width:260px;text-align:right;line-height:1.7}
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--light);background:var(--white);border-radius:8px;overflow:hidden}
+.svc-item{padding:40px 32px;border-right:1px solid var(--light);transition:all .3s}
+.svc-item:last-child{border-right:none}
+.svc-item:hover{background:var(--accent-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,150,143,.08)}
+.svc-num{font-size:11px;letter-spacing:.1em;color:var(--accent);margin-bottom:16px;font-weight:600}
+.svc-img{width:100%;height:160px;object-fit:cover;border-radius:6px;margin-bottom:20px}
+.svc-name{font-size:18px;font-weight:500;margin-bottom:12px}
+.svc-desc{font-size:14px;color:var(--mid);line-height:1.7;margin-bottom:16px}
+.svc-price{font-size:12px;color:var(--accent);letter-spacing:.05em;font-weight:600}
+
+/* PROCESS */
+.process{padding:100px 40px}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:56px;border:1px solid var(--light);border-radius:8px;overflow:hidden}
+.process-step{padding:40px 28px;border-right:1px solid var(--light);position:relative;transition:background .3s}
+.process-step:last-child{border-right:none}
+.process-step:hover{background:var(--off)}
+.step-num{font-family:'Playfair Display',serif;font-size:52px;color:var(--light);line-height:1;margin-bottom:20px}
+.step-title{font-size:16px;font-weight:500;margin-bottom:10px}
+.step-desc{font-size:13px;color:var(--mid);line-height:1.7}
+
+/* GALLERY — BEFORE/AFTER */
+.gallery{padding:100px 40px;background:var(--off)}
+.ba-section{display:flex;flex-direction:column;gap:56px;margin-top:48px}
+.ba-pair{}
+.ba-label-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ba-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:4px 14px;border-radius:20px;font-weight:500}
+.ba-label.before{background:#fce8e0;color:#8b3a1a}
+.ba-label.after{background:var(--accent-light);color:var(--accent)}
+.ba-arrow{font-size:18px;color:var(--mid)}
+.ba-images{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ba-img-wrap{position:relative;overflow:hidden;border-radius:8px;box-shadow:0 2px 12px rgba(10,25,47,.06)}
+.ba-img-wrap img{width:100%;height:260px;object-fit:cover;filter:none;transition:transform .5s}
+.ba-img-wrap:first-child img{filter:saturate(0.5) brightness(0.9)}
+.ba-img-wrap:hover img{transform:scale(1.04)}
+.ba-tag{position:absolute;top:12px;left:12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;font-weight:500}
+.before-tag{background:#8b3a1a;color:#fff}
+.after-tag{background:var(--accent);color:#fff}
+.ba-caption{font-size:13px;color:var(--mid);margin-top:12px;font-style:italic}
+
+/* TESTIMONIALS */
+.testimonials{padding:100px 40px}
+.testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.t-card{background:var(--off);padding:36px 32px;border-radius:8px;border:1px solid var(--light);transition:all .3s}
+.t-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(10,25,47,.06)}
+.t-stars{color:#f0a500;font-size:16px;margin-bottom:16px;letter-spacing:2px}
+.t-text{font-size:14px;color:var(--mid);line-height:1.8;margin-bottom:20px;font-style:italic}
+.t-author{font-size:13px;font-weight:500}
+.t-via{font-size:11px;color:var(--mid);margin-top:2px}
+
+/* BLOG / FAQ */
+.blog{padding:100px 40px;background:var(--off)}
+.faq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:56px}
+.faq-card{background:var(--white);border:1px solid var(--light);padding:36px 32px;border-radius:8px;cursor:pointer;transition:all .25s}
+.faq-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(0,150,143,.06)}
+.faq-q{font-size:16px;font-weight:500;margin-bottom:12px;line-height:1.4;display:flex;justify-content:space-between;gap:16px}
+.faq-q::after{content:'+';font-family:'Playfair Display',serif;font-size:22px;color:var(--accent);flex-shrink:0;transition:transform .3s}
+.faq-card.open .faq-q::after{transform:rotate(45deg)}
+.faq-a{font-size:14px;color:var(--mid);line-height:1.8;display:none;margin-top:8px}
+.faq-card.open .faq-a{display:block}
+.faq-tag{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent-light);color:var(--accent);padding:4px 10px;border-radius:20px;margin-bottom:12px;font-weight:500}
+.blog-cta{margin-top:48px;text-align:center;padding:48px;background:var(--white);border:1px solid var(--light);border-radius:8px}
+.blog-cta p{font-size:15px;color:var(--mid);margin-bottom:20px}
+
+/* CONTACT */
+.contact{padding:100px 40px;display:grid;grid-template-columns:1fr 1.3fr;gap:80px;border-top:1px solid var(--light)}
+.contact-left{display:flex;flex-direction:column;justify-content:center}
+.contact-title{font-family:'Playfair Display',serif;font-size:clamp(28px,3vw,42px);font-weight:400;line-height:1.2;margin-bottom:20px}
+.contact-sub{font-size:15px;color:var(--mid);line-height:1.8;margin-bottom:40px}
+.contact-method{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--light);transition:all .2s;border-radius:6px;padding:16px;margin:-8px;margin-bottom:16px}
+.contact-method:hover{background:var(--off)}
+.contact-method:last-child{border-bottom:none}
+.cm-icon{width:42px;height:42px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .25s}
+.contact-method:hover .cm-icon{background:var(--accent);filter:brightness(1.1)}
+.cm-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.cm-val{font-size:13px;color:var(--mid)}
+.contact-right{background:var(--off);padding:48px;border-radius:12px;border:1px solid var(--light)}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin-bottom:8px;font-weight:500}
+.form-input{width:100%;background:var(--white);border:1.5px solid var(--light);padding:13px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--black);outline:none;transition:all .25s;appearance:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,150,143,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-actions{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.btn-full{width:100%;padding:15px;font-size:14px;justify-content:center;border-radius:8px}
+.form-note{font-size:11px;color:var(--mid);text-align:center;margin-top:8px}
+
+/* SOCIAL PLACEHOLDER */
+.social-cta{padding:60px 40px;background:linear-gradient(135deg, var(--black) 0%, #0d2847 100%);color:var(--white);text-align:center}
+.social-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:400;margin-bottom:12px}
+.social-sub{font-size:14px;opacity:.8;margin-bottom:32px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.7}
+.social-links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.social-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.25);padding:10px 24px;border-radius:6px;font-size:13px;color:var(--white);transition:all .25s}
+.social-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5);transform:translateY(-1px)}
+
+/* FOOTER */
+footer{padding:48px 40px;border-top:1px solid var(--light)}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;padding-bottom:48px;border-bottom:1px solid var(--light)}
+.footer-brand-name{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:12px}
+.footer-brand-desc{font-size:13px;color:var(--mid);line-height:1.7;max-width:260px}
+.footer-col h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);margin-bottom:16px}
+.footer-col a{display:block;font-size:13px;color:var(--mid);margin-bottom:10px;transition:color .2s}
+.footer-col a:hover{color:var(--accent)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);flex-wrap:wrap;gap:12px}
+.helpling-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--light);padding:6px 14px;border-radius:20px;font-size:12px}
+
+/* LANG */
+[data-lang]{display:none}[data-lang].active{display:block}
+span[data-lang]{display:none}span[data-lang].active{display:inline}
+div[data-lang]{display:none}div[data-lang].active{display:block}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-left{animation:fadeUp .7s ease both}
+.hero-right{animation:fadeUp .9s .15s ease both}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease, transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hamburger{display:block}
+  .hero{grid-template-columns:1fr;min-height:auto}
+  .hero-left{padding:60px 20px 40px;border-right:none;border-bottom:1px solid var(--light)}
+  .hero-right{min-height:320px}
+  .hero-img{min-height:320px}
+  .about,.contact{grid-template-columns:1fr;gap:48px}
+  .services-grid,.process-grid{grid-template-columns:1fr}
+  .svc-item,.process-step{border-right:none;border-bottom:1px solid var(--light)}
+  .ba-images{grid-template-columns:1fr 1fr}
+  .ba-img-wrap img{height:180px}
+  .faq-grid,.testimonial-grid{grid-template-columns:1fr}
+  .section-header{flex-direction:column;align-items:flex-start;gap:12px}
+  .section-sub{text-align:left;max-width:none}
+  .trust-bar{gap:24px}
+  .footer-top{grid-template-columns:1fr 1fr}
+  .footer-bottom{justify-content:center;text-align:center}
+  section,.services,.gallery,.blog,.contact,.process,.testimonials,.about{padding:64px 20px}
+  .mobile-menu{padding:20px}
+  .about-tag{right:0;top:20px}
+  .contact-right{padding:28px 20px}
+  .form-row{grid-template-columns:1fr}
+  .social-cta{padding:48px 20px}
+  .nav-brand img{height:46px}
+  .contact-method{margin:0;margin-bottom:4px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-brand"><img src="jm_logo.png" alt="J&amp;M House Cleaning Logo"></a>
+  <div class="nav-links">
+    <a href="#servicios"><span data-lang="de" class="active">Leistungen</span><span data-lang="en">Services</span></a>
+    <a href="#nosotros"><span data-lang="de" class="active">Über uns</span><span data-lang="en">About us</span></a>
+    <a href="#faq">Blog / FAQ</a>
+    <a href="#kontakt" class="nav-cta"><span data-lang="de" class="active">Jetzt buchen</span><span data-lang="en">Book now</span></a>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#servicios" onclick="toggleMenu()"><span data-lang="de" class="active">Leistungen</span><span data-lang="en">Services</span></a>
+  <a href="#nosotros" onclick="toggleMenu()"><span data-lang="de" class="active">Über uns</span><span data-lang="en">About us</span></a>
+  <a href="#faq" onclick="toggleMenu()">Blog / FAQ</a>
+  <a href="#kontakt" onclick="toggleMenu()"><span data-lang="de" class="active">Jetzt buchen</span><span data-lang="en">Book now</span></a>
+  <div class="lang-toggle" style="padding-top:8px">
+    <button class="lang-btn active" onclick="setLang('de')">DE</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="eyebrow">München · Reinigungsservice</p>
+    <h1 class="hero-title">
+      <span data-lang="de" class="active">Ihr Zuhause,<br><em>makellos.</em></span>
+      <span data-lang="en">Your home,<br><em>spotless.</em></span>
+    </h1>
+    <p class="hero-sub">
+      <span data-lang="de" class="active">Professionelle Reinigung für Münchner Haushalte — zuverlässig, diskret und mit echter Sorgfalt. Direkt buchbar — kein Umweg, kein Aufpreis.</span>
+      <span data-lang="en">Professional cleaning for Munich households — reliable, discreet, and carried out with genuine care. Book directly — no platform, no extra fees.</span>
+    </p>
+    <div class="cta-row">
+      <button class="btn-primary btn-full" style="width:auto;padding:14px 28px" onclick="openWhatsApp()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.538 5.875L0 24l6.29-1.518A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.666-.498-5.197-1.367l-.371-.22-3.742.903.946-3.641-.24-.381A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </button>
+      <a href="#kontakt" class="btn-ghost">
+        <span data-lang="de" class="active">Angebot anfragen</span>
+        <span data-lang="en">Request a quote</span>
+      </a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <img class="hero-img"
+      src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80&auto=format&fit=crop"
+      alt="Clean modern apartment Munich"
+      onerror="this.src='https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=900&q=80'">
+    <div class="hero-badge">
+      <div class="badge-num">5★</div>
+      <div class="badge-txt">
+        <span data-lang="de" class="active">Kundenbewertung München</span>
+        <span data-lang="en">Client rating Munich</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-item"><span class="trust-icon">✓</span><span data-lang="de" class="active">Versichert & geprüft</span><span data-lang="en">Insured & vetted</span></div>
+  <div class="trust-item"><span class="trust-icon">🔍</span><span data-lang="de" class="active">Kostenlose Hausbesichtigung</span><span data-lang="en">Free home assessment</span></div>
+  <div class="trust-item"><span class="trust-icon">⏱</span><span data-lang="de" class="active">Antwort innerhalb 24h</span><span data-lang="en">Reply within 24h</span></div>
+  <div class="trust-item"><span class="trust-icon">🏠</span><span data-lang="de" class="active">München & Umgebung</span><span data-lang="en">Munich & surroundings</span></div>
+</div>
+
+<!-- ABOUT -->
+<section class="about" id="nosotros">
+  <div class="about-img-wrap">
+    <img class="about-img"
+      src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80&auto=format&fit=crop"
+      alt="Marcos und Judith - M&J Cleaning Team"
+      onerror="this.src='https://images.unsplash.com/photo-1527515637462-cff94aca55f0?w=800&q=80'">
+    <div class="about-tag">Marcos &amp; Judith — Ihr Team in München</div>
+  </div>
+  <div class="about-right">
+    <p class="eyebrow">
+      <span data-lang="de" class="active">Über uns</span>
+      <span data-lang="en">About us</span>
+    </p>
+    <h2 class="about-title">
+      <span data-lang="de" class="active">Wir bringen Sorgfalt in jedes Detail</span>
+      <span data-lang="en">We bring care to every detail</span>
+    </h2>
+    <p class="about-body">
+      <span data-lang="de" class="active">Hallo! Wir sind Marcos und Judith — ein Ehepaar aus München mit echter Leidenschaft für Sauberkeit und Ordnung. Was uns unterscheidet: Wir evaluieren jeden Auftrag individuell. Bevor wir anfangen, besichtigen wir Ihr Zuhause, verstehen Ihre Prioritäten und passen unsere Methoden und die geeigneten Reinigungsprodukte an Ihre Bedürfnisse an. Kein Einheitsprinzip — sondern ein Service, der wirklich zu Ihrer Wohnung passt. Wir arbeiten zu zweit, pünktlich, diskret und mit Respekt für Ihren Raum.</span>
+      <span data-lang="en">Hello! We are Marcos and Judith — a couple based in Munich with a genuine passion for cleanliness and order. What sets us apart: we assess every job individually. Before we start, we visit your home, understand your priorities, and adapt our methods and the right cleaning products to your specific needs. No one-size-fits-all — just a service that truly fits your home. We work as a team, on time, discreetly and with full respect for your space.</span>
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px">
+      <span style="border:.5px solid var(--light);padding:8px 16px;border-radius:2px;font-size:13px;color:var(--mid)"><span data-lang="de" class="active">Individuelle Hausbesichtigung</span><span data-lang="en">Individual assessment</span></span>
+      <span style="border:.5px solid var(--light);padding:8px 16px;border-radius:2px;font-size:13px;color:var(--mid)"><span data-lang="de" class="active">Angepasste Methoden</span><span data-lang="en">Tailored methods</span></span>
+      <span style="border:.5px solid var(--light);padding:8px 16px;border-radius:2px;font-size:13px;color:var(--mid)"><span data-lang="de" class="active">Zu zweit — schnell &amp; gründlich</span><span data-lang="en">Team of two — fast &amp; thorough</span></span>
+      <span style="border:.5px solid var(--light);padding:8px 16px;border-radius:2px;font-size:13px;color:var(--mid)"><span data-lang="de" class="active">Diskret &amp; pünktlich</span><span data-lang="en">Discreet &amp; on time</span></span>
+    </div>
+    <div class="about-sign">Marcos &amp; Judith</div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="servicios">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span data-lang="de" class="active">Unsere Leistungen</span>
+      <span data-lang="en">Our services</span>
+    </h2>
+    <p class="section-sub">
+      <span data-lang="de" class="active">Jede Buchung mit persönlicher Sorgfalt und Liebe zum Detail.</span>
+      <span data-lang="en">Every booking with personal care and attention to detail.</span>
+    </p>
+  </div>
+  <div class="services-grid">
+    <div class="svc-item">
+      <div class="svc-num">01</div>
+      <img class="svc-img"
+        src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80&auto=format&fit=crop"
+        alt="Haushaltsreinigung München"
+        onerror="this.src='https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80'">
+      <div class="svc-name">
+        <span data-lang="de" class="active">Haushaltsreinigung</span>
+        <span data-lang="en">Home cleaning</span>
+      </div>
+      <p class="svc-desc">
+        <span data-lang="de" class="active">Regelmäßige Reinigung — Küche, Bad, Wohn- und Schlafzimmer. Ideal für Berufstätige und Familien.</span>
+        <span data-lang="en">Regular cleaning — kitchen, bathroom, living and bedroom. Ideal for professionals and families.</span>
+      </p>
+      <div class="svc-price">
+        <span data-lang="de" class="active">Ab €18/Std. · nach Hausbesichtigung</span>
+        <span data-lang="en">From €18/h · after home assessment</span>
+      </div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">02</div>
+      <img class="svc-img"
+        src="https://images.unsplash.com/photo-1527515637462-cff94aca55f0?w=600&q=80&auto=format&fit=crop"
+        alt="Tiefenreinigung München"
+        onerror="this.src='https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80'">
+      <div class="svc-name">
+        <span data-lang="de" class="active">Tiefenreinigung</span>
+        <span data-lang="en">Deep cleaning</span>
+      </div>
+      <p class="svc-desc">
+        <span data-lang="de" class="active">Intensive Grundreinigung für Einzug, Auszug oder besondere Anlässe — inkl. Kühlschrank, Ofen und Fugen.</span>
+        <span data-lang="en">Thorough deep clean for moving in/out or special occasions — including fridge, oven, and grout.</span>
+      </p>
+      <div class="svc-price">
+        <span data-lang="de" class="active">Ab €18/Std. · nach Hausbesichtigung</span>
+        <span data-lang="en">From €18/h · after home assessment</span>
+      </div>
+    </div>
+    <div class="svc-item">
+      <div class="svc-num">03</div>
+      <img class="svc-img"
+        src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80&auto=format&fit=crop"
+        alt="Büroreinigung München"
+        onerror="this.src='https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80'">
+      <div class="svc-name">
+        <span data-lang="de" class="active">Büro &amp; Gewerbe</span>
+        <span data-lang="en">Office &amp; commercial</span>
+      </div>
+      <p class="svc-desc">
+        <span data-lang="de" class="active">Professionelle Reinigung für kleine Büros und Gewerbeflächen in München und Umgebung.</span>
+        <span data-lang="en">Professional cleaning for small offices and commercial spaces in Munich and surroundings.</span>
+      </p>
+      <div class="svc-price">
+        <span data-lang="de" class="active">Ab €18/Std. · nach Hausbesichtigung</span>
+        <span data-lang="en">From €18/h · after home assessment</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span data-lang="de" class="active">So einfach funktioniert's</span>
+      <span data-lang="en">How it works</span>
+    </h2>
+    <p class="section-sub">
+      <span data-lang="de" class="active">In 4 Schritten zu einem sauberen Zuhause.</span>
+      <span data-lang="en">4 simple steps to a clean home.</span>
+    </p>
+  </div>
+  <div class="process-grid">
+    <div class="process-step">
+      <div class="step-num">01</div>
+      <div class="step-title"><span data-lang="de" class="active">Anfrage stellen</span><span data-lang="en">Send a request</span></div>
+      <p class="step-desc"><span data-lang="de" class="active">Via WhatsApp oder E-Mail — wir antworten innerhalb von 24 Stunden.</span><span data-lang="en">Via WhatsApp or email — we reply within 24 hours.</span></p>
+    </div>
+    <div class="process-step">
+      <div class="step-num">02</div>
+      <div class="step-title"><span data-lang="de" class="active">Kostenlose Hausbesichtigung</span><span data-lang="en">Free home assessment</span></div>
+      <p class="step-desc"><span data-lang="de" class="active">Wir kommen vorbei, evaluieren den Aufwand und machen Ihnen ein transparentes Angebot.</span><span data-lang="en">We visit, assess the work and give you a clear, honest quote.</span></p>
+    </div>
+    <div class="process-step">
+      <div class="step-num">03</div>
+      <div class="step-title"><span data-lang="de" class="active">Wir kommen zu Ihnen</span><span data-lang="en">We come to you</span></div>
+      <p class="step-desc"><span data-lang="de" class="active">Pünktlich und vollständig ausgerüstet — mit den für Ihr Zuhause passenden Mitteln.</span><span data-lang="en">On time and fully equipped — with the right products for your home.</span></p>
+    </div>
+    <div class="process-step">
+      <div class="step-num">04</div>
+      <div class="step-title"><span data-lang="de" class="active">Makellos sauberes Zuhause</span><span data-lang="en">Spotless clean home</span></div>
+      <p class="step-desc"><span data-lang="de" class="active">Genießen Sie Ihr frisch gereinigtes Zuhause und teilen Sie uns Ihr Feedback mit.</span><span data-lang="en">Enjoy your freshly cleaned home and share your feedback with us.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span data-lang="de" class="active">Unsere Arbeit</span>
+      <span data-lang="en">Our work</span>
+    </h2>
+    <p class="section-sub">
+      <span data-lang="de" class="active">Jede Reinigung — ein Unterschied, den man sieht.</span>
+      <span data-lang="en">Every clean — a difference you can see.</span>
+    </p>
+  </div>
+  <!-- Before/After pairs -->
+  <div class="ba-section">
+
+    <div class="ba-pair">
+      <div class="ba-label-row">
+        <span class="ba-label before">Vorher / Before</span>
+        <span class="ba-arrow">→</span>
+        <span class="ba-label after">Nachher / After</span>
+      </div>
+      <div class="ba-images">
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=75&auto=format&fit=crop" alt="Küche vorher - unordentlich" loading="lazy">
+          <span class="ba-tag before-tag">Vorher</span>
+        </div>
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=80&auto=format&fit=crop" alt="Küche nachher - blitzsauber" loading="lazy">
+          <span class="ba-tag after-tag">Nachher</span>
+        </div>
+      </div>
+      <div class="ba-caption"><span data-lang="de" class="active">Küche — Grundreinigung</span><span data-lang="en">Kitchen — deep clean</span></div>
+    </div>
+
+    <div class="ba-pair">
+      <div class="ba-label-row">
+        <span class="ba-label before">Vorher / Before</span>
+        <span class="ba-arrow">→</span>
+        <span class="ba-label after">Nachher / After</span>
+      </div>
+      <div class="ba-images">
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=700&q=75&auto=format&fit=crop" alt="Bad vorher - Kalkflecken" loading="lazy">
+          <span class="ba-tag before-tag">Vorher</span>
+        </div>
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=700&q=80&auto=format&fit=crop" alt="Bad nachher - strahlend sauber" loading="lazy">
+          <span class="ba-tag after-tag">Nachher</span>
+        </div>
+      </div>
+      <div class="ba-caption"><span data-lang="de" class="active">Badezimmer — Kalkentfernung &amp; Desinfektion</span><span data-lang="en">Bathroom — descaling &amp; disinfection</span></div>
+    </div>
+
+    <div class="ba-pair">
+      <div class="ba-label-row">
+        <span class="ba-label before">Vorher / Before</span>
+        <span class="ba-arrow">→</span>
+        <span class="ba-label after">Nachher / After</span>
+      </div>
+      <div class="ba-images">
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1463620910506-d0458143143e?w=700&q=75&auto=format&fit=crop" alt="Wohnzimmer vorher - unordentlich" loading="lazy">
+          <span class="ba-tag before-tag">Vorher</span>
+        </div>
+        <div class="ba-img-wrap">
+          <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=700&q=80&auto=format&fit=crop" alt="Wohnzimmer nachher - sauber" loading="lazy">
+          <span class="ba-tag after-tag">Nachher</span>
+        </div>
+      </div>
+      <div class="ba-caption"><span data-lang="de" class="active">Wohnzimmer — Regelmäßige Reinigung</span><span data-lang="en">Living room — regular cleaning</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span data-lang="de" class="active">Was unsere Kunden sagen</span>
+      <span data-lang="en">What our clients say</span>
+    </h2>
+    <p class="section-sub">
+      <span data-lang="de" class="active">Echte Bewertungen von echten Kunden in München.</span>
+      <span data-lang="en">Real reviews from real clients in Munich.</span>
+    </p>
+  </div>
+  <div class="testimonial-grid">
+    <div class="t-card">
+      <div class="t-stars">★★★★★</div>
+      <p class="t-text">"<span data-lang="de" class="active">Marcos und Judith sind absolut zuverlässig und pünktlich. Meine Wohnung war noch nie so sauber! Ich buche sie jetzt regelmäßig direkt.</span><span data-lang="en">Marcos and Judith are absolutely reliable and on time. My apartment has never been so clean! I now book them regularly.</span>"</p>
+      <div class="t-author">Anna M.</div>
+      <div class="t-via">Direktkundin · Schwabing</div>
+    </div>
+    <div class="t-card">
+      <div class="t-stars">★★★★★</div>
+      <p class="t-text">"<span data-lang="de" class="active">Sehr professionell und diskret. Was mich am meisten überzeugt hat, war die Hausbesichtigung vorher — sie haben genau verstanden, was ich brauche. Klare Empfehlung!</span><span data-lang="en">Very professional and discreet. What impressed me most was the prior home visit — they understood exactly what I needed. Highly recommended!</span>"</p>
+      <div class="t-author">Thomas K.</div>
+      <div class="t-via">Direktkunde · Schwabing</div>
+    </div>
+    <div class="t-card">
+      <div class="t-stars">★★★★★</div>
+      <p class="t-text">"<span data-lang="de" class="active">Nach dem Auszug haben sie eine Tiefenreinigung gemacht — die Kaution kam vollständig zurück. Perfekte Arbeit!</span><span data-lang="en">After moving out, they did a deep clean — my full deposit came back. Perfect work!</span>"</p>
+      <div class="t-author">Lisa B.</div>
+      <div class="t-via">Direktkundin · Maxvorstadt</div>
+    </div>
+  </div>
+</section>
+
+<!-- BLOG / FAQ -->
+<section class="blog" id="faq">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span data-lang="de" class="active">Häufige Fragen</span>
+      <span data-lang="en">Frequently asked questions</span>
+    </h2>
+    <p class="section-sub">
+      <span data-lang="de" class="active">Alles was Sie wissen möchten, bevor Sie buchen.</span>
+      <span data-lang="en">Everything you need to know before booking.</span>
+    </p>
+  </div>
+  <div class="faq-grid">
+
+    <article class="faq-card" onclick="toggleFaq(this)">
+      <div class="faq-tag">Preise · München</div>
+      <div class="faq-q">
+        <span data-lang="de" class="active">Was kostet eine Haushaltsreinigung in München?</span>
+        <span data-lang="en">How much does a home cleaning service cost in Munich?</span>
+      </div>
+      <div class="faq-a">
+        <span data-lang="de" class="active">Unsere Stundensätze beginnen ab <strong>€18/Stunde</strong>. Der endgültige Preis hängt jedoch immer vom Zustand, der Größe und den Anforderungen Ihrer Wohnung ab. Deshalb führen wir vor jedem Auftrag eine <strong>kostenlose Hausbesichtigung</strong> durch — so erhalten Sie ein ehrliches und transparentes Angebot ohne Überraschungen. Außerdem: Haushaltsnahe Dienstleistungen sind in Deutschland steuerlich absetzbar — bis zu 20% der Lohnkosten (max. €4.000/Jahr).</span>
+        <span data-lang="en">Our hourly rates start from <strong>€18/hour</strong>. However, the final price always depends on the condition, size, and specific requirements of your home. That's why we do a <strong>free home assessment</strong> before every job — so you get an honest, transparent quote with no surprises. Also: household services are tax-deductible in Germany — up to 20% of labour costs (max. €4,000/year).</span>
+      </div>
+    </article>
+
+    <article class="faq-card" onclick="toggleFaq(this)">
+      <div class="faq-tag">Tiefenreinigung</div>
+      <div class="faq-q">
+        <span data-lang="de" class="active">Was ist der Unterschied zwischen Haushaltsreinigung und Tiefenreinigung?</span>
+        <span data-lang="en">What is the difference between regular cleaning and deep cleaning?</span>
+      </div>
+      <div class="faq-a">
+        <span data-lang="de" class="active">Eine <strong>Haushaltsreinigung</strong> (regelmäßig, z.B. wöchentlich) umfasst Staubwischen, Staubsaugen, Wischen, Bad- und Küchenreinigung. Eine <strong>Tiefenreinigung</strong> geht deutlich weiter: Backofen und Kühlschrank innen, Fugenreinigung, Fensterrahmen, Schränke innen, Heizkörper und alle schwer erreichbaren Bereiche. Tiefenreinigung empfiehlt sich beim Ein- oder Auszug, nach Renovierungen oder als halbjährlicher Frühjahrsputz.</span>
+        <span data-lang="en">A <strong>regular cleaning</strong> (weekly or bi-weekly) covers dusting, vacuuming, mopping, and bathroom/kitchen cleaning. A <strong>deep cleaning</strong> goes much further: inside oven and fridge, grout scrubbing, window frames, inside cabinets, radiators, and all hard-to-reach areas. Deep cleaning is recommended when moving in/out, after renovations, or as a biannual spring clean.</span>
+      </div>
+    </article>
+
+    <article class="faq-card" onclick="toggleFaq(this)">
+      <div class="faq-tag">Preise · München</div>
+      <div class="faq-q">
+        <span data-lang="de" class="active">Wie läuft die Preisfindung ab — gibt es einen Festpreis?</span>
+        <span data-lang="en">How does pricing work — is there a fixed rate?</span>
+      </div>
+      <div class="faq-a">
+        <span data-lang="de" class="active">Unsere Stundensätze beginnen ab <strong>€18/Stunde</strong> — aber der endgültige Preis hängt immer vom Zustand und der Größe Ihrer Wohnung ab. Deshalb empfehlen wir vor jeder Buchung eine <strong>kostenlose Hausbesichtigung</strong>: Wir kommen vorbei, bewerten den Aufwand ehrlich und machen Ihnen ein transparentes, unverbindliches Angebot. Kein Überraschungspreis nach der Reinigung.</span>
+        <span data-lang="en">Our hourly rates start from <strong>€18/hour</strong> — but the final price always depends on the condition and size of your home. That's why we recommend a <strong>free home assessment</strong> before every booking: we visit, evaluate the work needed honestly, and give you a clear, no-obligation quote. No surprise charges after the clean.</span>
+      </div>
+    </article>
+
+    <article class="faq-card" onclick="toggleFaq(this)">
+      <div class="faq-tag">Reinigungsmittel</div>
+      <div class="faq-q">
+        <span data-lang="de" class="active">Müssen wir eigene Reinigungsmittel bereitstellen?</span>
+        <span data-lang="en">Do we need to provide our own cleaning products?</span>
+      </div>
+      <div class="faq-a">
+        <span data-lang="de" class="active">Das hängt von Ihrer Wohnung ab! Bei unserer <strong>kostenlosen Hausbesichtigung</strong> evaluieren wir, welche Reinigungsprodukte und Methoden für Ihre Böden, Oberflächen und Bedürfnisse am besten geeignet sind. Wir passen uns an — ob Sie spezielle Produkte bevorzugen, empfindliche Materialien haben oder bestimmte Anforderungen haben. Wir benötigen Zugang zu einem Staubsauger und einem Wischmopp/Eimer vor Ort.</span>
+        <span data-lang="en">That depends on your home! During our <strong>free assessment</strong>, we evaluate which products and methods are best suited to your floors, surfaces and needs. We adapt — whether you prefer specific products, have delicate materials, or have particular requirements. We do need access to a vacuum cleaner and a mop/bucket on site.</span>
+      </div>
+    </article>
+
+    <article class="faq-card" onclick="toggleFaq(this)">
+      <div class="faq-tag">Endreinigung München</div>
+      <div class="faq-q">
+        <span data-lang="de" class="active">Helfen Sie auch bei der Endreinigung beim Auszug, um die Kaution zurückzubekommen?</span>
+        <span data-lang="en">Do you help with move-out cleaning to get the deposit back?</span>
+      </div>
+      <div class="faq-a">
+        <span data-lang="de" class="active">Ja! Endreinigungen oder Auszugsreinigungen in München sind eines unserer Spezialgebiete. Eine professionelle Übergabereinigung erhöht Ihre Chancen auf eine vollständige Kaution erheblich. Wir reinigen alle Bereiche, die Vermieter und Hausverwaltungen besonders prüfen: Küche (Ofen, Herd, Dunstabzug), Badezimmer (Kalk, Fugen, Armaturen), Böden, Fenster und Schränke. Kontaktieren Sie uns rechtzeitig — idealerweise 5–7 Tage vor der Wohnungsübergabe.</span>
+        <span data-lang="en">Yes! Move-out and handover cleaning in Munich is one of our specialities. A professional end-of-tenancy clean significantly increases your chances of getting your full deposit back. We clean all areas that landlords and property managers inspect closely: kitchen (oven, hob, extractor), bathroom (limescale, grout, fixtures), floors, windows, and cabinets. Contact us in advance — ideally 5–7 days before the handover date.</span>
+      </div>
+    </article>
+
+    <article class="faq-card" onclick="toggleFaq(this)" style="border:.5px solid var(--accent)">
+      <div class="faq-tag" style="background:var(--accent);color:#fff">Noch eine Frage?</div>
+      <div class="faq-q" style="font-family:'Playfair Display',serif;font-weight:400;font-style:italic">
+        <span data-lang="de" class="active">Ich habe eine andere Frage — wie erreiche ich euch?</span>
+        <span data-lang="en">I have a different question — how can I reach you?</span>
+      </div>
+      <div class="faq-a" style="display:block">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn-wa" style="padding:10px 20px;font-size:13px" onclick="openWhatsApp()">WhatsApp</button>
+          <button class="btn-ghost" style="padding:10px 20px;font-size:13px" onclick="sendEmail()">E-Mail</button>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="kontakt">
+  <div class="contact-left">
+    <h2 class="contact-title">
+      <span data-lang="de" class="active">Jetzt anfragen &amp; buchen</span>
+      <span data-lang="en">Request &amp; book now</span>
+    </h2>
+    <p class="contact-sub">
+      <span data-lang="de" class="active">Schreiben Sie uns — wir melden uns innerhalb von 24 Stunden für eine kostenlose Hausbesichtigung und ein persönliches Angebot.</span>
+      <span data-lang="en">Send us a message — we'll get back to you within 24 hours to arrange a free home assessment and personal quote.</span>
+    </p>
+    <div class="contact-method" style="cursor:pointer" onclick="openWhatsApp()">
+      <div class="cm-icon">💬</div>
+      <div>
+        <div class="cm-title">WhatsApp</div>
+        <div class="cm-val" id="waDisplay">+49 178 266 2613</div>
+      </div>
+    </div>
+    <div class="contact-method" style="cursor:pointer" onclick="openGmailLeft()">
+      <div class="cm-icon">✉️</div>
+      <div>
+        <div class="cm-title">E-Mail</div>
+        <div class="cm-val" id="emailDisplay">jm.hosuecleaning@gmail.com</div>
+      </div>
+    </div>
+    <div class="contact-method" style="cursor:pointer" onclick="openSMS()">
+      <div class="cm-icon">📱</div>
+      <div>
+        <div class="cm-title">SMS</div>
+        <div class="cm-val">+49 178 266 2613</div>
+      </div>
+    </div>
+    <div class="contact-method">
+      <div class="cm-icon">📍</div>
+      <div>
+        <div class="cm-title">Einsatzgebiet</div>
+        <div class="cm-val">München &amp; Umgebung (30 km)</div>
+      </div>
+    </div>
+    <div class="contact-method" style="border:none">
+      <div class="cm-icon">🕐</div>
+      <div>
+        <div class="cm-title">Verfügbarkeit</div>
+        <div class="cm-val"><span data-lang="de" class="active">Mo–Sa, 8:00–18:00 Uhr</span><span data-lang="en">Mon–Sat, 8:00–18:00</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="contact-right">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label"><span data-lang="de" class="active">Vorname</span><span data-lang="en">First name</span></label>
+        <input type="text" class="form-input" id="fname" placeholder="Anna">
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span data-lang="de" class="active">Nachname</span><span data-lang="en">Last name</span></label>
+        <input type="text" class="form-input" id="lname" placeholder="Müller">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-Mail</label>
+      <input type="email" class="form-input" id="femail" placeholder="anna@beispiel.de">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon / WhatsApp</label>
+      <input type="tel" class="form-input" id="fphone" placeholder="+49 ...">
+    </div>
+    <div class="form-group">
+      <label class="form-label"><span data-lang="de" class="active">Leistung</span><span data-lang="en">Service</span></label>
+      <select class="form-input" id="fservice">
+        <option value="Haushaltsreinigung"><span data-lang="de" class="active">Haushaltsreinigung (regelmäßig)</span></option>
+        <option value="Tiefenreinigung">Tiefenreinigung / Deep Clean</option>
+        <option value="Endreinigung">Endreinigung / Move-out Clean</option>
+        <option value="Büroreinigung">Büro &amp; Gewerbe</option>
+        <option value="Sonstiges">Sonstiges / Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label"><span data-lang="de" class="active">Nachricht</span><span data-lang="en">Message</span> <span style="color:var(--mid);font-size:10px">(optional)</span></label>
+      <textarea class="form-input" id="fmessage" rows="3" placeholder="Wohnungsgröße, Wunschtermin, besondere Anforderungen..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-wa btn-full" onclick="submitToWhatsApp()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.538 5.875L0 24l6.29-1.518A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.666-.498-5.197-1.367l-.371-.22-3.742.903.946-3.641-.24-.381A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <span data-lang="de" class="active">Per WhatsApp senden</span>
+        <span data-lang="en">Send via WhatsApp</span>
+      </button>
+      <button class="btn-ghost btn-full" onclick="sendEmail()">
+        ✉️
+        <span data-lang="de" class="active">Per E-Mail senden</span>
+        <span data-lang="en">Send via Email</span>
+      </button>
+      <button class="btn-ghost btn-full" onclick="submitToSMS()" style="border-color:var(--accent);color:var(--accent)">
+        📱
+        <span data-lang="de" class="active">Per SMS senden</span>
+        <span data-lang="en">Send via SMS</span>
+      </button>
+    </div>
+    <p class="form-note">
+      <span data-lang="de" class="active">Antwort innerhalb 24h · Kein Spam · Kostenlos &amp; unverbindlich</span>
+      <span data-lang="en">Reply within 24h · No spam · Free &amp; non-binding</span>
+    </p>
+  </div>
+</section>
+
+<!-- SOCIAL CTA -->
+<div class="social-cta">
+  <h3 class="social-title">
+    <span data-lang="de" class="active">Kontaktieren & folgen Sie uns</span>
+    <span data-lang="en">Contact & follow us</span>
+  </h3>
+  <p class="social-sub">
+    <span data-lang="de" class="active">Erreichen Sie uns per WhatsApp, SMS oder E-Mail. Folgen Sie uns auf Facebook für Angebote, Tipps und Neuigkeiten rund um die Reinigung in München.</span>
+    <span data-lang="en">Reach us via WhatsApp, SMS or email. Follow us on Facebook for offers, tips and news about cleaning in Munich.</span>
+  </p>
+  <div class="social-links">
+    <a href="#" class="social-btn" onclick="openWhatsApp(); return false;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.538 5.875L0 24l6.29-1.518A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.666-.498-5.197-1.367l-.371-.22-3.742.903.946-3.641-.24-.381A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      WhatsApp
+    </a>
+    <a href="sms:+491782662613" class="social-btn">
+      📱 SMS
+    </a>
+    <a href="https://www.facebook.com/profile.php?id=61568026520451" target="_blank" class="social-btn">
+      📘 Facebook
+    </a>
+    <a href="#" class="social-btn" style="opacity:.6;cursor:default">
+      📸 Instagram <span style="font-size:11px;opacity:.7">(bald)</span>
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand-name">J&amp;M House Cleaning</div>
+      <p class="footer-brand-desc">Professionelle Haushaltsreinigung in München. Zuverlässig, versichert, eco-friendly.</p>
+      <div class="helpling-badge" style="margin-top:16px">
+        ✓ <span>Versichert &amp; persönlicher Service</span>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Leistungen</h4>
+      <a href="#servicios">Haushaltsreinigung</a>
+      <a href="#servicios">Tiefenreinigung</a>
+      <a href="#servicios">Endreinigung</a>
+      <a href="#servicios">Büroreinigung</a>
+    </div>
+    <div class="footer-col">
+      <h4>Info</h4>
+      <a href="#nosotros">Über uns</a>
+      <a href="#faq">FAQ / Blog</a>
+      <a href="#kontakt">Direkt buchen</a>
+    </div>
+    <div class="footer-col">
+      <h4>Kontakt</h4>
+      <a href="#" onclick="openWhatsApp();return false">WhatsApp</a>
+      <a href="#" onclick="sendEmail();return false">E-Mail</a>
+      <a href="#kontakt">Anfrageformular</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 J&amp;M House Cleaning München. Alle Rechte vorbehalten.</span>
+    <span>Impressum · Datenschutz</span>
+  </div>
+</footer>
+
+<script>
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('waDisplay').textContent = '+49 178 266 2613';
+  document.getElementById('emailDisplay').textContent = CONFIG.gmail;
+
+  // Scroll reveal animation
+  const revealEls = document.querySelectorAll('.about, .services, .process, .gallery, .testimonials, .blog, .contact, .social-cta');
+  revealEls.forEach(el => el.classList.add('reveal'));
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  revealEls.forEach(el => observer.observe(el));
+
+  // Nav shadow on scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 10);
+  });
+});
+
+// ===== LANG =====
+function setLang(lang){
+  document.querySelectorAll('[data-lang]').forEach(el=>{
+    el.classList.toggle('active', el.getAttribute('data-lang')===lang);
+  });
+  document.querySelectorAll('.lang-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active', (i===0&&lang==='de')||(i===1&&lang==='en'));
+  });
+}
+
+// ===== MOBILE MENU =====
+function toggleMenu(){
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+// ===== FAQ =====
+function toggleFaq(el){
+  el.classList.toggle('open');
+}
+
+// ===== WHATSAPP =====
+function openWhatsApp(){
+  const url = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(CONFIG.whatsappMsg);
+  window.open(url, '_blank');
+}
+
+// ===== ENVÍO DE DATOS A GOOGLE SHEETS / EXCEL =====
+function sendToSheet(data) {
+  if (!CONFIG.sheetWebhook || CONFIG.sheetWebhook.includes("AQUI_TU_WEBHOOK")) return;
+  
+  // Construimos un envío nativo vía iframe oculto para evitar cualquier bloqueo de CORS 
+  // y garantizar que "e.parameter" atrape los datos correctamente.
+  let iframe = document.getElementById('hidden_iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.name = 'hidden_iframe';
+    iframe.id = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+  
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = CONFIG.sheetWebhook;
+  form.target = 'hidden_iframe';
+  form.style.display = 'none';
+  
+  for (const key in data) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = data[key];
+    form.appendChild(input);
+  }
+  
+  document.body.appendChild(form);
+  form.submit();
+  
+  // Limpiamos el formulario temporal
+  setTimeout(() => { form.remove(); }, 2000);
+}
+
+function getFormData() {
+  return {
+    firstName: document.getElementById('fname')?.value || '',
+    lastName: document.getElementById('lname')?.value || '',
+    email: document.getElementById('femail')?.value || '',
+    phone: document.getElementById('fphone')?.value || '',
+    service: document.getElementById('fservice')?.value || '',
+    message: document.getElementById('fmessage')?.value || ''
+  };
+}
+
+// ===== FORM → WHATSAPP =====
+function submitToWhatsApp(){
+  const data = getFormData();
+  if(!data.firstName){alert('Bitte Vorname eingeben / Please enter first name'); return;}
+  
+  const msg = `Hallo! Ich interessiere mich für Ihre Reinigungsdienstleistung.\n\n👤 Name: ${data.firstName} ${data.lastName}\n📧 E-Mail: ${data.email||'-'}\n📱 Telefon: ${data.phone||'-'}\n🧹 Leistung: ${data.service}\n💬 Nachricht: ${data.message||'-'}\n\nIch freue mich auf Ihre Antwort!`;
+  
+  // 1. Abrimos ventana inmediatamente para que los bloqueadores de popups no bloqueen
+  window.open('https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(msg), '_blank');
+  
+  // 2. Ejecutamos el envío de datos en segundo plano
+  sendToSheet(data);
+}
+
+// ===== FORM → EMAIL (MANDA A GMAIL) =====
+function sendEmail(){
+  const data = getFormData();
+  if(!data.firstName){alert('Bitte Vorname eingeben / Please enter first name'); return;}
+
+  const subject = `Anfrage Reinigungsservice München – ${data.service}`;
+  const body = `Hallo Marcos & Judith,\n\nIch interessiere mich für folgende Leistung:\n\nName: ${data.firstName} ${data.lastName}\nE-Mail: ${data.email}\nTelefon: ${data.phone}\nLeistung: ${data.service}\nNachricht: ${data.message}\n\nBitte melden Sie sich bei mir.\n\nMit freundlichen Grüßen,\n${data.firstName}`;
+  
+  // Ir directo a la web de Gmail
+  const gUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${CONFIG.gmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  
+  // 1. Abrimos Gmail inmediatamente
+  window.open(gUrl, '_blank');
+  
+  // 2. Ejecutamos el envío de datos
+  sendToSheet(data);
+}
+
+// ===== BOTON LATERAL GMAIL =====
+function openGmailLeft() {
+  const gUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${CONFIG.gmail}`;
+  window.open(gUrl, '_blank');
+}
+
+// ===== SMS =====
+function openSMS() {
+  window.open('sms:+' + CONFIG.whatsapp, '_self');
+}
+
+function submitToSMS() {
+  const data = getFormData();
+  if(!data.firstName){alert('Bitte Vorname eingeben / Please enter first name'); return;}
+  const msg = `Hallo J&M! Anfrage: ${data.firstName} ${data.lastName}, ${data.service}. ${data.message||''} Tel: ${data.phone||'-'}`;
+  window.open('sms:+' + CONFIG.whatsapp + '?body=' + encodeURIComponent(msg), '_self');
+  sendToSheet(data);
+}
+
+// ===== SMOOTH SCROLL =====
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const t = document.querySelector(a.getAttribute('href'));
+    if(t){e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'});}
+  });
+});
+
+// ===== JSON-LD SCHEMA (SEO) =====
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "M&J Cleaning München",
+  "description": "Professionelle Haushaltsreinigung in München. Zuverlässig, versichert, eco-friendly.",
+  "@id": "https://mjcleaning.de",
+  "url": "https://mjcleaning.de",
+  "telephone": "+"+CONFIG.whatsapp,
+  "email": CONFIG.gmail,
+  "priceRange": "€€",
+  "areaServed": {"@type":"City","name":"München"},
+  "address": {"@type":"PostalAddress","addressLocality":"München","addressCountry":"DE"},
+  "serviceType": ["Haushaltsreinigung","Tiefenreinigung","Endreinigung","Büroreinigung"],
+  "aggregateRating": {"@type":"AggregateRating","ratingValue":"5","reviewCount":"12"}
+};
+const s = document.createElement('script');
+s.type = 'application/ld+json';
+s.textContent = JSON.stringify(schema);
+document.head.appendChild(s);
+</script>
+</body>
+</html>
