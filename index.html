@@ -3701,7 +3701,7 @@ function openClientModal(clientId) {
   document.getElementById('modalBody').innerHTML = bodyHtml;
   
   const addressEncoded = encodeURIComponent(client.direccion + ', ' + client.ciudad);
-  const dbUrl = `https://www.bahn.de/buchung/fahrplan/suche#sts=true&so=München&zo=${addressEncoded}`;
+  const dbUrl = `dbnavigator://query?Z=${addressEncoded}`;
 
   let modalActionsHtml = `
     <div style="display:flex;gap:8px;width:100%">
@@ -4270,7 +4270,7 @@ function renderTodayDashboard() {
             </span>
             <div style="display:flex;gap:6px">
               <a href="${client.mapUrl}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#5AC8FA">🗺 Maps</a>
-              <a href="https://www.bahn.de/buchung/fahrplan/suche#sts=true&so=München&zo=${encodeURIComponent(client.direccion + ', ' + client.ciudad)}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#FF3B30">🚆 DB</a>
+              <a href="dbnavigator://query?Z=${encodeURIComponent(client.direccion + ', ' + client.ciudad)}" class="map-btn" onclick="event.stopPropagation()" style="color:#FF3B30">🚆 DB</a>
             </div>
           </div>
           ${client.acceso ? `<div class="today-access">\ud83d\udd11 ${client.acceso}</div>` : ''}
