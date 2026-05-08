@@ -725,6 +725,7 @@ body{
   background:var(--off);
   border-top:1px solid rgba(0,0,0,0.05);
   display:flex;
+  flex-wrap:wrap;
   gap:8px;
 }
 .modal-btn{
@@ -3075,6 +3076,15 @@ function buildMapUrl(direccion, ciudad) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
+function copyAddress(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 Dirección copiada', 'success');
+  }).catch(err => {
+    console.error('Error:', err);
+    showToast('⚠️ No se pudo copiar', 'error');
+  });
+}
+
 // Sort clients by day of week, then by start time
 function sortClients(arr) {
   return [...arr].sort((a, b) => {
@@ -3515,7 +3525,10 @@ function renderClientCards() {
               <div class="detail-icon">📍</div>
               <div class="detail-info">
                 <span class="detail-label">Dirección</span>
-                <span class="detail-value">${client.direccion}, ${client.ciudad}</span>
+                <span class="detail-value" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  ${client.direccion}, ${client.ciudad}
+                  <button onclick="copyAddress('${client.direccion}, ${client.ciudad}'); event.stopPropagation();" style="background:var(--light);border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:11px;font-weight:600;color:var(--black)">📋 Copiar</button>
+                </span>
               </div>
             </div>
             ${client.telefono ? `<div class="detail-row">
@@ -3642,7 +3655,10 @@ function openClientModal(clientId) {
         <div class="modal-detail-icon" style="background:${client.colorLight}">📍</div>
         <div class="modal-detail-text">
           <span class="modal-detail-label">Dirección</span>
-          <span class="modal-detail-value">${client.direccion}, ${client.ciudad}</span>
+          <span class="modal-detail-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${client.direccion}, ${client.ciudad}
+            <button onclick="copyAddress('${client.direccion}, ${client.ciudad}')" style="background:var(--off);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mid)">📋 Copiar</button>
+          </span>
         </div>
       </div>
       ${client.telefono ? `<div class="modal-detail">
@@ -3684,15 +3700,24 @@ function openClientModal(clientId) {
   
   document.getElementById('modalBody').innerHTML = bodyHtml;
   
+  const addressEncoded = encodeURIComponent(client.direccion + ', ' + client.ciudad);
+  const dbUrl = `https://www.bahn.de/buchung/fahrplan/suche#sts=true&so=München&zo=${addressEncoded}`;
+
   let modalActionsHtml = `
-    <a href="${client.mapUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none">🗺 Ver en Mapa</a>`;
+    <div style="display:flex;gap:8px;width:100%">
+      <a href="${client.mapUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center">🗺 Google Maps</a>
+      <a href="${dbUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center;background:#FF3B30">🚆 App DB</a>
+    </div>
+    <div style="display:flex;gap:8px;width:100%">`;
+  
   if (phoneClean) {
     modalActionsHtml += `
-    <a href="https://wa.me/${phoneClean.replace('+','')}" target="_blank" class="modal-btn secondary" style="text-decoration:none;background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.2)">💬 WhatsApp</a>`;
+      <a href="https://wa.me/${phoneClean.replace('+','')}" target="_blank" class="modal-btn secondary" style="text-decoration:none;background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.2)">💬 WhatsApp</a>`;
   }
   modalActionsHtml += `
-    <button class="modal-btn secondary" onclick="openAdmin(); showEditForm('${client.id}'); closeModalForce();">✏️ Editar</button>
-    <button class="modal-btn danger" onclick="closeModalForce(); confirmDelete('${client.id}')">🗑️</button>`;
+      <button class="modal-btn secondary" onclick="openAdmin(); showEditForm('${client.id}'); closeModalForce();">✏️ Editar</button>
+      <button class="modal-btn danger" onclick="closeModalForce(); confirmDelete('${client.id}')">🗑️</button>
+    </div>`;
   document.getElementById('modalActions').innerHTML = modalActionsHtml;
   
   document.getElementById('modalOverlay').classList.add('open');
@@ -4239,8 +4264,14 @@ function renderTodayDashboard() {
         <div>
           <div class="today-card-name">${client.nombre || ''}</div>
           <div class="today-card-meta">
-            <span>\ud83d\udccd ${client.direccion}</span>
-            <a href="${client.mapUrl}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#5AC8FA">\ud83d\uddfa Navegar</a>
+            <span style="display:flex;align-items:center;gap:6px">
+              📍 ${client.direccion}
+              <button onclick="copyAddress('${client.direccion}, ${client.ciudad}'); event.stopPropagation();" style="background:rgba(255,255,255,0.1);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:10px;font-weight:600;color:var(--white)">📋 Copiar</button>
+            </span>
+            <div style="display:flex;gap:6px">
+              <a href="${client.mapUrl}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#5AC8FA">🗺 Maps</a>
+              <a href="https://www.bahn.de/buchung/fahrplan/suche#sts=true&so=München&zo=${encodeURIComponent(client.direccion + ', ' + client.ciudad)}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#FF3B30">🚆 DB</a>
+            </div>
           </div>
           ${client.acceso ? `<div class="today-access">\ud83d\udd11 ${client.acceso}</div>` : ''}
           ${client.notas ? `<div class="today-notes">\ud83d\udccb ${client.notas}</div>` : ''}
@@ -5654,15 +5685,21 @@ async function downloadReportPDF() {
     const month = reportMonth.getMonth();
     
     // Gather data
-    let totalIncome = 0, totalCompletions = 0, totalHours = 0;
+    let totalIncome = 0, totalCompletions = 0, totalHours = 0, totalCancelled = 0;
     const clientData = {};
     const workedDatesSet = new Set();
+    const dayCounts = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0}; // Sunday to Saturday
     
     Object.keys(COMPLETED).forEach(key => {
       const parts = key.split('_');
       const dateStr = parts[parts.length - 1];
-      const [cy, cm] = dateStr.split('-').map(Number);
+      const [cy, cm, cd] = dateStr.split('-').map(Number);
       if (cy === year && cm === month + 1) {
+        const val = COMPLETED[key];
+        if (val && typeof val === 'object' && val.cancelled) {
+          totalCancelled++;
+          return;
+        }
         const clientId = parts.slice(0, -1).join('_');
         const client = CLIENTS.find(c => c.id === clientId);
         if (!client) return;
@@ -5671,90 +5708,255 @@ async function downloadReportPDF() {
         totalCompletions++;
         totalHours += client.duracion || 0;
         workedDatesSet.add(dateStr);
+        
+        const dDate = new Date(cy, cm-1, cd);
+        dayCounts[dDate.getDay()]++;
+        
         const name = client.nombre.trim();
-        if (!clientData[name]) clientData[name] = { count: 0, income: 0, hours: 0 };
+        if (!clientData[name]) clientData[name] = { count: 0, income: 0, hours: 0, client: client };
         clientData[name].count++;
         clientData[name].income += price;
         clientData[name].hours += client.duracion || 0;
       }
     });
-    
+
     const expenses = getMonthExpenses(year, month);
     const net = totalIncome - expenses;
     const daysWorked = workedDatesSet.size;
+    const activeClientsThisMonth = Object.keys(clientData).length;
     
+    const rph = totalHours > 0 ? totalIncome / totalHours : 0;
+    const cancelRate = (totalCancelled + totalCompletions) > 0 ? (totalCancelled / (totalCancelled + totalCompletions) * 100) : 0;
+    const marginPct = totalIncome > 0 ? (net / totalIncome * 100) : 0;
+    const avgJobPrice = totalCompletions > 0 ? totalIncome / totalCompletions : 0;
+    const costPerJob = totalCompletions > 0 ? expenses / totalCompletions : 0;
+
+    // Previous month logic for comparison
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const prevClientsSet = new Set();
+    Object.keys(COMPLETED).forEach(key => {
+      const parts = key.split('_');
+      const dateStr = parts[parts.length - 1];
+      const [cy, cm] = dateStr.split('-').map(Number);
+      if (cy === prevYear && cm === prevMonth + 1) {
+        const val = COMPLETED[key];
+        if (val && typeof val === 'object' && val.cancelled) return;
+        const clientId = parts.slice(0, -1).join('_');
+        prevClientsSet.add(clientId);
+      }
+    });
+    const prevClientsCount = prevClientsSet.size;
+    let retainedCount = 0;
+    let newClientsCount = 0;
+    Object.values(clientData).forEach(cd => {
+       if (prevClientsSet.has(cd.client.id)) retainedCount++;
+       else newClientsCount++;
+    });
+    const retentionRate = prevClientsCount > 0 ? (retainedCount / prevClientsCount * 100) : 100;
+    
+    // Sort clients by income
+    const sortedClients = Object.entries(clientData).sort((a,b) => b[1].income - a[1].income);
+
+    // --- PDF GENERATION LOGIC ---
+    let y = 20;
+    const pageHeight = 297;
+    const margin = 20;
+    
+    function checkPageAdd(increment) {
+        if (y + increment > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+            return true;
+        }
+        return false;
+    }
+    
+    function printTitle(text) {
+        checkPageAdd(15);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(29, 29, 31);
+        doc.text(text, margin, y);
+        y += 8;
+    }
+    
+    function printText(text, isBold = false, indent = 0) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+        doc.setTextColor(60, 60, 60);
+        const lines = doc.splitTextToSize(text, 170 - indent);
+        checkPageAdd(lines.length * 5);
+        doc.text(lines, margin + indent, y);
+        y += lines.length * 5 + 2;
+    }
+
     // Header
     doc.setFillColor(29, 29, 31);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('INFORME MENSUAL', 20, 18);
+    doc.text('INFORME MENSUAL EJECUTIVO', 20, 18);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text(`${MESES[month]} ${year} — J&M House Cleaning`, 20, 28);
     doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, 20, 35);
+    y = 50;
+
+    // 1. SCORECARD
+    printTitle('1. RESUMEN EJECUTIVO (SCORECARD)');
+    printText(`• Ingresos totales del mes: €${totalIncome.toFixed(2)}`, true);
+    printText(`• Trabajos completados: ${totalCompletions}`);
+    printText(`• Ingresos promedio por trabajo: €${avgJobPrice.toFixed(2)}`);
+    printText(`• Horas facturables totales: ${totalHours.toFixed(1)}h`);
+    printText(`• Ingreso promedio por hora (RPH): €${rph.toFixed(2)}`, true);
+    printText(`• Clientes activos (recurrentes): ${activeClientsThisMonth}`);
+    printText(`• Clientes nuevos captados: ${newClientsCount}`);
+    printText(`• Tasa de retención de clientes: ${retentionRate.toFixed(1)}%`);
+    printText(`• Tasa de cancelaciones del mes: ${cancelRate.toFixed(1)}%`);
+    printText(`• Margen bruto estimado: ${marginPct.toFixed(1)}%`, true);
+    printText(`• Costo promedio por trabajo: €${costPerJob.toFixed(2)}`);
     
-    // KPIs
-    let y = 52;
-    doc.setTextColor(29, 29, 31);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Resumen Ejecutivo', 20, y); y += 10;
+    let healthIndex = 5;
+    let healthReasons = [];
+    if (rph >= 25) { healthIndex += 1; healthReasons.push("Excelente RPH"); }
+    else if (rph < 20) { healthIndex -= 1; healthReasons.push("RPH bajo"); }
+    if (marginPct >= 50) { healthIndex += 1; healthReasons.push("Buen margen"); }
+    if (retentionRate >= 80) { healthIndex += 1; healthReasons.push("Alta retención"); }
+    if (cancelRate <= 5) { healthIndex += 1; healthReasons.push("Pocas cancelaciones"); }
+    if (newClientsCount > 0) { healthIndex += 1; healthReasons.push("Nuevos clientes"); }
+    healthIndex = Math.max(1, Math.min(10, healthIndex));
     
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    const kpis = [
-      ['Ingresos Brutos', `€${totalIncome.toFixed(2)}`],
-      ['Gastos', `€${expenses.toFixed(2)}`],
-      ['Ganancia Neta', `€${net.toFixed(2)}`],
-      ['Dias Trabajados', `${daysWorked}`],
-      ['Horas Trabajadas', `${totalHours.toFixed(1)}h`],
-      ['Limpiezas Completadas', `${totalCompletions}`]
-    ];
-    kpis.forEach(([label, val]) => {
-      doc.text(`${label}:`, 25, y);
-      doc.setFont('helvetica', 'bold');
-      doc.text(val, 100, y);
-      doc.setFont('helvetica', 'normal');
-      y += 7;
+    y += 3;
+    printText(`ÍNDICE DE SALUD DEL NEGOCIO: ${healthIndex}/10`, true);
+    printText(`Motivo: ${healthReasons.join(', ') || 'Estable'}`);
+    y += 5;
+
+    // 2. FINANCIERO
+    printTitle('2. ANÁLISIS FINANCIERO PROFUNDO');
+    printText(`• Desglose de ingresos por cliente (Top 5):`);
+    sortedClients.slice(0, 5).forEach(([name, data]) => {
+        printText(`  - ${name}: €${data.income.toFixed(2)} (${((data.income/totalIncome)*100).toFixed(1)}%)`, false, 5);
     });
-    
-    // Client table
+    printText(`• Ingreso por hora trabajada: €${rph.toFixed(2)} (Benchmark en Alemania: €18–€35/hora)`);
+    printText(`• Margen Bruto: ${marginPct.toFixed(1)}%`);
+    const estimatedLTV = (activeClientsThisMonth > 0 ? (totalIncome / activeClientsThisMonth) : 0) * 12;
+    printText(`• Valor de vida del cliente estimado (LTV 12m): €${estimatedLTV.toFixed(2)}`);
+    y += 5;
+
+    // 3. OPERATIVO
+    printTitle('3. MÉTRICAS OPERATIVAS');
+    const utilization = daysWorked > 0 ? (totalHours / (daysWorked * 8)) * 100 : 0;
+    printText(`• Porcentaje de utilización del tiempo: ${utilization.toFixed(1)}% (sobre 8h laborables/día)`);
+    const avgTimeMins = totalCompletions > 0 ? (totalHours * 60) / totalCompletions : 0;
+    printText(`• Tiempo promedio por trabajo: ${Math.round(avgTimeMins)} minutos`);
+    const jobsPerDay = daysWorked > 0 ? totalCompletions / daysWorked : 0;
+    printText(`• Trabajos por día laborable: ${jobsPerDay.toFixed(1)}`);
+    printText(`• Trabajos completados a tiempo: Datos no registrados.`);
+    printText(`• Tasa de cancelaciones: ${cancelRate.toFixed(1)}% (${totalCancelled} perdidos)`);
+    const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+    let maxDay = 1, maxCount = -1;
+    for(let i=1; i<=5; i++) { if(dayCounts[i] > maxCount) { maxCount = dayCounts[i]; maxDay = i; } }
+    printText(`• Día con mayor demanda: ${dayNames[maxDay]} (${maxCount} trabajos)`);
+    y += 5;
+
+    // 4. CLIENTES
+    printTitle('4. MÉTRICAS DE CLIENTES');
+    printText(`• Tasa de retención mensual: ${retentionRate.toFixed(1)}% (Benchmark óptimo: ≥ 80%)`);
+    printText(`• Clientes nuevos captados este mes: ${newClientsCount}`);
+    const atRisk = [];
+    prevClientsSet.forEach(id => {
+       if (!Object.values(clientData).some(c => c.client.id === id)) {
+          const cl = CLIENTS.find(c => c.id === id);
+          if (cl) atRisk.push(cl.nombre.split(' ')[0]);
+       }
+    });
+    printText(`• Clientes en riesgo (sin servicio en >4 semanas): ${atRisk.length > 0 ? atRisk.slice(0,5).join(', ') : 'Ninguno'}`);
+    printText(`• Clientes VIP (Top 3): ${sortedClients.slice(0,3).map(s => s[0].split(' ')[0]).join(', ') || 'N/A'}`);
+    y += 5;
+
+    // 5. GRÁFICOS (TEXTO)
+    printTitle('5. GRÁFICOS Y VISUALIZACIONES');
+    printText(`GRÁFICO - Distribución de ingresos (Top 5):`, true);
+    sortedClients.slice(0, 5).forEach(([name, data]) => {
+        const pct = ((data.income/totalIncome)*100);
+        const bars = "█".repeat(Math.round(pct/5)) || "▏";
+        printText(`${name.substring(0,12).padEnd(14)} | ${bars} ${pct.toFixed(1)}%`, false, 5);
+    });
+    y += 3;
+    printText(`INDICADORES SEMÁFORO:`, true);
+    printText(`${rph >= 25 ? '🟢' : (rph >= 20 ? '🟡' : '🔴')} RPH (€${rph.toFixed(2)})`);
+    printText(`${retentionRate >= 80 ? '🟢' : '🔴'} Retención (${retentionRate.toFixed(1)}%)`);
+    printText(`${cancelRate <= 10 ? '🟢' : '🔴'} Cancelaciones (${cancelRate.toFixed(1)}%)`);
+    y += 5;
+
+    // 6. PREDICCIONES
+    printTitle('6. PREDICCIONES Y PROYECCIONES');
+    printText(`• Proyección de ingresos próximo mes: €${(totalIncome * (retentionRate/100 || 1)).toFixed(2)} (Basado en retención actual)`);
+    printText(`• Estimación de clientes activos esperados: ${Math.round(activeClientsThisMonth * (retentionRate/100 || 1))}`);
+    const breakEven = avgJobPrice > 0 ? (expenses / avgJobPrice) : 0;
+    printText(`• Punto de equilibrio mensual: ${Math.ceil(breakEven)} trabajos para cubrir costos fijos.`);
+    printText(`• Proyección anual acumulada: €${(totalIncome * 12).toFixed(2)}`);
+    y += 5;
+
+    // 7. BENCHMARKS
+    printTitle('7. ANÁLISIS COMPARATIVO CON BENCHMARKS');
+    printText(`• Ingreso por trabajo: €${avgJobPrice.toFixed(2)}`);
+    printText(`• Tasa de retención: M&J (${retentionRate.toFixed(1)}%) vs Óptimo (≥80%) -> ${retentionRate >= 80 ? 'POR ENCIMA ✅' : 'POR DEBAJO ⚠️'}`);
+    printText(`• Ratio LTV:CAC: Datos de marketing (CAC) no disponibles.`);
+    printText(`• Margen bruto: M&J (${marginPct.toFixed(1)}%) vs Sector (40-60%) -> ${marginPct >= 40 ? 'EN LÍNEA ✅' : 'POR DEBAJO ⚠️'}`);
+    printText(`• Tasa de cancelaciones: M&J (${cancelRate.toFixed(1)}%) vs Promedio (<10%) -> ${cancelRate <= 10 ? 'POR DEBAJO ✅' : 'POR ENCIMA ⚠️'}`);
+    y += 5;
+
+    // 8. VICTORIAS
+    printTitle('8. TOP 3 VICTORIAS DEL MES');
+    let wins = [];
+    if (newClientsCount > 0) wins.push(`Captación de ${newClientsCount} clientes nuevos.`);
+    if (retentionRate >= 90) wins.push(`Excelente retención de clientes (${retentionRate.toFixed(1)}%).`);
+    if (rph >= 25) wins.push(`Alto ingreso por hora promedio (RPH de €${rph.toFixed(2)}).`);
+    if (cancelRate === 0) wins.push(`Mes operativo perfecto sin cancelaciones.`);
+    if (marginPct >= 50) wins.push(`Gran rentabilidad con margen bruto del ${marginPct.toFixed(1)}%.`);
+    if (wins.length === 0) wins.push("Mes de consolidación y estabilidad.");
+    wins.slice(0, 3).forEach((win, idx) => printText(`${idx+1}. ${win}`));
+    y += 5;
+
+    // 9. ALERTAS
+    printTitle('9. TOP 3 ALERTAS Y ÁREAS DE MEJORA');
+    let alerts = [];
+    if (cancelRate > 10) alerts.push(`Alta tasa de cancelación (${cancelRate.toFixed(1)}%). Acción: Entender motivos y contactar clientes.`);
+    if (rph < 20) alerts.push(`RPH bajo (€${rph.toFixed(2)}). Acción: Optimizar tiempos de limpieza o renegociar tarifas.`);
+    if (retentionRate < 80) alerts.push(`Retención baja (${retentionRate.toFixed(1)}%). Acción: Enviar mensajes de recuperación.`);
+    if (atRisk.length > 0) alerts.push(`Clientes en riesgo (${atRisk.length}). Acción: Ofrecer recordatorio de servicio.`);
+    if (alerts.length === 0) alerts.push("Sin alertas críticas detectadas. ¡Excelente desempeño!");
+    alerts.slice(0, 3).forEach((alert, idx) => printText(`${idx+1}. ${alert}`));
+    y += 5;
+
+    // 10. PLAN DE ACCIÓN
+    printTitle('10. PLAN DE ACCIÓN PARA EL PRÓXIMO MES');
+    printText(`• Meta de ingresos: €${(totalIncome * 1.1).toFixed(2)} (+10% crecimiento)`);
+    printText(`• Meta de nuevos clientes: 2`);
+    printText(`• Acción 1: Contactar a los clientes inactivos o en riesgo.`);
+    printText(`• Acción 2: ${rph < 22 ? 'Evaluar aumento de precio en clientes que demandan más horas.' : 'Mantener eficiencia operativa actual.'}`);
+    printText(`• Experimento: Enviar recordatorios de limpieza 48h antes por WhatsApp.`);
     y += 8;
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Desglose por Cliente', 20, y); y += 8;
-    
-    doc.setFillColor(245, 245, 247);
-    doc.rect(20, y - 3, 170, 8, 'F');
-    doc.setFontSize(9);
-    doc.text('CLIENTE', 25, y + 2);
-    doc.text('LIMP.', 100, y + 2);
-    doc.text('HORAS', 120, y + 2);
-    doc.text('INGRESOS', 155, y + 2);
-    y += 10;
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    Object.entries(clientData).sort((a,b) => b[1].income - a[1].income).forEach(([name, data]) => {
-      if (y > 270) { doc.addPage(); y = 20; }
-      doc.text(name, 25, y);
-      doc.text(`${data.count}`, 105, y);
-      doc.text(`${data.hours.toFixed(1)}h`, 125, y);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`€${data.income.toFixed(2)}`, 155, y);
-      doc.setFont('helvetica', 'normal');
-      y += 7;
-    });
-    
-    // Footer
-    doc.setTextColor(134, 134, 139);
-    doc.setFontSize(9);
-    doc.text('J&M House Cleaning · Munchen · Informe Confidencial', 105, 285, { align: 'center' });
-    
-    // Robust download method to fix missing .pdf extension
-    const filename = `Informe_${MESES[month]}_${year}_JM.pdf`;
+
+    doc.setTextColor(0, 122, 255);
+    doc.setFont('helvetica', 'italic');
+    printText(`"El éxito de M&J House Cleaning se construye una limpieza a la vez. ¡Gran trabajo y a seguir creciendo en Múnich!"`, true);
+
+    // Footer on all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setTextColor(134, 134, 139);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`J&M House Cleaning · Múnchen · Informe Confidencial · Página ${i}/${pageCount}`, 105, 285, { align: 'center' });
+    }
+
+    // Download
+    const filename = `Informe_Ejecutivo_${MESES[month]}_${year}_JM.pdf`;
     const pdfBlob = doc.output('blob');
     
     if (window.showSaveFilePicker) {
