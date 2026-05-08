@@ -2656,7 +2656,8 @@ body{
 <!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<!-- jsPDF for invoice generation -->
+<!-- Chart.js and jsPDF for invoice generation -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
@@ -5807,18 +5808,51 @@ async function downloadReportPDF() {
 
     // 1. SCORECARD
     printTitle('1. RESUMEN EJECUTIVO (SCORECARD)');
-    printText(`• Ingresos totales del mes: €${totalIncome.toFixed(2)}`, true);
-    printText(`• Trabajos completados: ${totalCompletions}`);
-    printText(`• Ingresos promedio por trabajo: €${avgJobPrice.toFixed(2)}`);
-    printText(`• Horas facturables totales: ${totalHours.toFixed(1)}h`);
-    printText(`• Ingreso promedio por hora (RPH): €${rph.toFixed(2)}`, true);
-    printText(`• Clientes activos (recurrentes): ${activeClientsThisMonth}`);
-    printText(`• Clientes nuevos captados: ${newClientsCount}`);
-    printText(`• Tasa de retención de clientes: ${retentionRate.toFixed(1)}%`);
-    printText(`• Tasa de cancelaciones del mes: ${cancelRate.toFixed(1)}%`);
-    printText(`• Margen bruto estimado: ${marginPct.toFixed(1)}%`, true);
-    printText(`• Costo promedio por trabajo: €${costPerJob.toFixed(2)}`);
     
+    // Draw rounded box for KPIs
+    doc.setFillColor(245, 245, 247);
+    doc.roundedRect(20, y, 170, 60, 3, 3, 'F');
+    y += 8;
+    
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Ingresos Totales', 25, y);
+    doc.setFontSize(14); doc.setTextColor(0,0,0); doc.setFont('helvetica', 'bold');
+    doc.text(`€${totalIncome.toFixed(2)}`, 25, y+6);
+    
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('RPH', 85, y);
+    doc.setFontSize(14); doc.setTextColor(rph >= 25 ? 52:255, rph >= 25 ? 199:59, rph >= 25 ? 89:48); doc.setFont('helvetica', 'bold');
+    doc.text(`€${rph.toFixed(2)}`, 85, y+6);
+
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Margen Bruto', 145, y);
+    doc.setFontSize(14); doc.setTextColor(0,0,0); doc.setFont('helvetica', 'bold');
+    doc.text(`${marginPct.toFixed(1)}%`, 145, y+6);
+
+    y += 18;
+
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Trabajos', 25, y);
+    doc.setFontSize(14); doc.setTextColor(0,0,0); doc.setFont('helvetica', 'bold');
+    doc.text(`${totalCompletions}`, 25, y+6);
+    
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Retención', 85, y);
+    doc.setFontSize(14); doc.setTextColor(0,0,0); doc.setFont('helvetica', 'bold');
+    doc.text(`${retentionRate.toFixed(1)}%`, 85, y+6);
+
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Cancelaciones', 145, y);
+    doc.setFontSize(14); doc.setTextColor(cancelRate <= 5 ? 52:255, cancelRate <= 5 ? 199:59, cancelRate <= 5 ? 89:48); doc.setFont('helvetica', 'bold');
+    doc.text(`${cancelRate.toFixed(1)}%`, 145, y+6);
+    
+    y += 18;
+    
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Nuevos', 25, y);
+    doc.setFontSize(14); doc.setTextColor(0,0,0); doc.setFont('helvetica', 'bold');
+    doc.text(`+${newClientsCount}`, 25, y+6);
+
     let healthIndex = 5;
     let healthReasons = [];
     if (rph >= 25) { healthIndex += 1; healthReasons.push("Excelente RPH"); }
@@ -5828,11 +5862,16 @@ async function downloadReportPDF() {
     if (cancelRate <= 5) { healthIndex += 1; healthReasons.push("Pocas cancelaciones"); }
     if (newClientsCount > 0) { healthIndex += 1; healthReasons.push("Nuevos clientes"); }
     healthIndex = Math.max(1, Math.min(10, healthIndex));
-    
-    y += 3;
-    printText(`ÍNDICE DE SALUD DEL NEGOCIO: ${healthIndex}/10`, true);
-    printText(`Motivo: ${healthReasons.join(', ') || 'Estable'}`);
-    y += 5;
+
+    doc.setFontSize(10); doc.setTextColor(100,100,100); doc.setFont('helvetica', 'normal');
+    doc.text('Salud del Negocio', 85, y);
+    doc.setFontSize(14); doc.setTextColor(0,122,255); doc.setFont('helvetica', 'bold');
+    doc.text(`${healthIndex}/10`, 85, y+6);
+
+    doc.setFontSize(9); doc.setTextColor(150,150,150); doc.setFont('helvetica', 'normal');
+    doc.text(`Motivo: ${healthReasons.join(', ') || 'Estable'}`, 25, y+13);
+
+    y += 20;
 
     // 2. FINANCIERO
     printTitle('2. ANÁLISIS FINANCIERO PROFUNDO');
@@ -5877,20 +5916,89 @@ async function downloadReportPDF() {
     printText(`• Clientes VIP (Top 3): ${sortedClients.slice(0,3).map(s => s[0].split(' ')[0]).join(', ') || 'N/A'}`);
     y += 5;
 
-    // 5. GRÁFICOS (TEXTO)
+    // 5. GRÁFICOS (VISUALES)
     printTitle('5. GRÁFICOS Y VISUALIZACIONES');
-    printText(`GRÁFICO - Distribución de ingresos (Top 5):`, true);
-    sortedClients.slice(0, 5).forEach(([name, data]) => {
-        const pct = ((data.income/totalIncome)*100);
-        const bars = "█".repeat(Math.round(pct/5)) || "▏";
-        printText(`${name.substring(0,12).padEnd(14)} | ${bars} ${pct.toFixed(1)}%`, false, 5);
-    });
-    y += 3;
-    printText(`INDICADORES SEMÁFORO:`, true);
-    printText(`${rph >= 25 ? '🟢' : (rph >= 20 ? '🟡' : '🔴')} RPH (€${rph.toFixed(2)})`);
-    printText(`${retentionRate >= 80 ? '🟢' : '🔴'} Retención (${retentionRate.toFixed(1)}%)`);
-    printText(`${cancelRate <= 10 ? '🟢' : '🔴'} Cancelaciones (${cancelRate.toFixed(1)}%)`);
-    y += 5;
+    try {
+      const getChartImage = (config, w, h) => {
+        return new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.style.display = 'none';
+          document.body.appendChild(canvas);
+          config.options = config.options || {};
+          config.options.animation = false;
+          config.options.responsive = false;
+          config.plugins = [{
+            id: 'bg',
+            beforeDraw: (c) => {
+              const ctx = c.canvas.getContext('2d');
+              ctx.save();
+              ctx.globalCompositeOperation = 'destination-over';
+              ctx.fillStyle = 'white';
+              ctx.fillRect(0, 0, c.width, c.height);
+              ctx.restore();
+            }
+          }];
+          new Chart(canvas, config);
+          setTimeout(() => {
+            resolve(canvas.toDataURL('image/png', 1.0));
+            document.body.removeChild(canvas);
+          }, 300);
+        });
+      };
+
+      const top5 = sortedClients.slice(0, 5);
+      const pieImg = await getChartImage({
+        type: 'doughnut',
+        data: {
+          labels: top5.map(s => s[0].substring(0, 15)),
+          datasets: [{
+            data: top5.map(s => s[1].income),
+            backgroundColor: ['#FF2D55', '#5856D6', '#FF9500', '#34C759', '#5AC8FA'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'right' },
+            title: { display: true, text: 'Distribución de Ingresos (Top 5)', font: { size: 16 } }
+          }
+        }
+      }, 550, 250);
+
+      const barImg = await getChartImage({
+        type: 'bar',
+        data: {
+          labels: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+          datasets: [{
+            label: 'Trabajos completados',
+            data: [dayCounts[1], dayCounts[2], dayCounts[3], dayCounts[4], dayCounts[5], dayCounts[6]],
+            backgroundColor: '#007AFF',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Actividad por Día de la Semana', font: { size: 16 } }
+          },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      }, 550, 250);
+
+      if (checkPageAdd(80)) { /* reset y handled */ }
+      doc.addImage(pieImg, 'PNG', 15, y, 150, 70);
+      y += 80;
+      
+      if (checkPageAdd(80)) { /* reset y handled */ }
+      doc.addImage(barImg, 'PNG', 15, y, 150, 70);
+      y += 80;
+    } catch(err) {
+      console.error("Error graficos:", err);
+      printText("Visualización de gráficos no disponible.", true);
+    }
+
 
     // 6. PREDICCIONES
     printTitle('6. PREDICCIONES Y PROYECCIONES');
