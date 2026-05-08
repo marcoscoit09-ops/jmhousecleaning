@@ -3701,12 +3701,12 @@ function openClientModal(clientId) {
   document.getElementById('modalBody').innerHTML = bodyHtml;
   
   const addressEncoded = encodeURIComponent(client.direccion + ', ' + client.ciudad);
-  const transitUrl = `https://www.google.com/maps/dir/?api=1&destination=${addressEncoded}&travelmode=transit`;
+  const dbUrl = `dbnavigator://query?Z=${addressEncoded}`;
 
   let modalActionsHtml = `
     <div style="display:flex;gap:8px;width:100%">
-      <a href="${client.mapUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center">🗺 Auto</a>
-      <a href="${transitUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center;background:#8E44AD">🚇 Transporte</a>
+      <a href="${client.mapUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center">🗺 Google Maps</a>
+      <a href="${dbUrl}" target="_blank" class="modal-btn primary" style="text-decoration:none;flex:1;text-align:center;background:#FF3B30">🚆 App DB</a>
     </div>
     <div style="display:flex;gap:8px;width:100%">`;
   
@@ -4269,8 +4269,8 @@ function renderTodayDashboard() {
               <button onclick="copyAddress('${client.direccion}, ${client.ciudad}'); event.stopPropagation();" style="background:rgba(255,255,255,0.1);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:10px;font-weight:600;color:var(--white)">📋 Copiar</button>
             </span>
             <div style="display:flex;gap:6px">
-              <a href="${client.mapUrl}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#5AC8FA">🗺 Auto</a>
-              <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(client.direccion + ', ' + client.ciudad)}&travelmode=transit" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#AF52DE">🚇 Transporte</a>
+              <a href="${client.mapUrl}" target="_blank" class="map-btn" onclick="event.stopPropagation()" style="color:#5AC8FA">🗺 Maps</a>
+              <a href="dbnavigator://query?Z=${encodeURIComponent(client.direccion + ', ' + client.ciudad)}" class="map-btn" onclick="event.stopPropagation()" style="color:#FF3B30">🚆 DB</a>
             </div>
           </div>
           ${client.acceso ? `<div class="today-access">\ud83d\udd11 ${client.acceso}</div>` : ''}
