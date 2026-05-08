@@ -2691,7 +2691,7 @@ const DEFAULT_CLIENTS = [
     ciudad: 'München',
     color: '#E74C3C',
     colorLight: '#FDEDEC',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Landsberger+Str.+446A+München'
+    mapUrl: 'https://www.google.com/maps/dir/?api=1&destination=Landsberger+Str.+446A,+München&travelmode=transit'
   },
   {
     id: 'melanie',
@@ -2709,7 +2709,7 @@ const DEFAULT_CLIENTS = [
     ciudad: 'München',
     color: '#9B59B6',
     colorLight: '#F4ECF7',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Paul-Heyse-Straße+32+München'
+    mapUrl: 'https://www.google.com/maps/dir/?api=1&destination=Paul-Heyse-Straße+32,+München&travelmode=transit'
   },
   {
     id: 'ferdinand',
@@ -2727,7 +2727,7 @@ const DEFAULT_CLIENTS = [
     ciudad: 'München',
     color: '#3498DB',
     colorLight: '#EBF5FB',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Arcisstraße+38r+München'
+    mapUrl: 'https://www.google.com/maps/dir/?api=1&destination=Arcisstraße+38r,+München&travelmode=transit'
   }
 ];
 
@@ -3072,8 +3072,8 @@ function getInitials(nombre) {
 }
 
 function buildMapUrl(direccion, ciudad) {
-  const query = `${direccion} ${ciudad}`.replace(/\s+/g, '+');
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  const destination = `${direccion}, ${ciudad}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=transit`;
 }
 
 function copyAddress(text) {
