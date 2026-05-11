@@ -4071,6 +4071,43 @@ function saveClient() {
   const originalClient = editingId ? CLIENTS.find(c => c.id === editingId) : null;
   const isDayOrFreqChanged = originalClient && (originalClient.dia !== dia || originalClient.frecuencia !== frecuencia);
   
+  let newFechaInicio = fechaUnica;
+  if (frecuencia === 'unica') {
+    newFechaInicio = fechaUnica;
+  } else if (editingId && isDayOrFreqChanged) {
+    if (originalClient.dia !== dia && fechaUnica) {
+      newFechaInicio = fechaUnica;
+    } else {
+      let maxDate = null;
+      const clientPrefix = editingId + '_';
+      for (const key in COMPLETED) {
+        if (key.startsWith(clientPrefix)) {
+          const compData = COMPLETED[key];
+          if (compData && typeof compData === 'object' && !compData.cancelled) {
+            const dateStr = key.substring(clientPrefix.length);
+            if (!maxDate || dateStr > maxDate) {
+              maxDate = dateStr;
+            }
+          }
+        }
+      }
+      if (maxDate) {
+        const [y, m, d] = maxDate.split('-').map(Number);
+        const lastDate = new Date(y, m - 1, d);
+        if (frecuencia === 'quincenal') lastDate.setDate(lastDate.getDate() + 14);
+        else if (frecuencia === 'mensual') lastDate.setDate(lastDate.getDate() + 28);
+        else if (frecuencia === 'semanal') lastDate.setDate(lastDate.getDate() + 7);
+        newFechaInicio = `${lastDate.getFullYear()}-${String(lastDate.getMonth()+1).padStart(2,'0')}-${String(lastDate.getDate()).padStart(2,'0')}`;
+      } else {
+        newFechaInicio = fechaUnica || originalClient.fechaInicio || `${miniCalSelected.getFullYear()}-${String(miniCalSelected.getMonth()+1).padStart(2,'0')}-${String(miniCalSelected.getDate()).padStart(2,'0')}`;
+      }
+    }
+  } else if (!editingId) {
+    newFechaInicio = fechaUnica || `${miniCalSelected.getFullYear()}-${String(miniCalSelected.getMonth()+1).padStart(2,'0')}-${String(miniCalSelected.getDate()).padStart(2,'0')}`;
+  } else {
+    newFechaInicio = originalClient.fechaInicio || fechaUnica;
+  }
+
   const clientData = {
     id: editingId || generateId(nombre),
     nombre: fullName,
@@ -4094,7 +4131,7 @@ function saveClient() {
     colorLight: colorLight,
     mapUrl: buildMapUrl(direccion, ciudad),
     activo: activo,
-    fechaInicio: editingId ? (isDayOrFreqChanged ? fechaUnica : (originalClient.fechaInicio || fechaUnica)) : fechaUnica
+    fechaInicio: newFechaInicio
   };
   
   if (editingId) {
