@@ -4601,15 +4601,35 @@ function closePhotoViewer() {
 // ===== CLIENT HISTORY =====
 function getClientHistory(clientId) {
   const history = [];
+  const client = CLIENTS.find(c => c.id === clientId);
+  if (!client) return history;
+  
+  const baseName = client.nombre.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const altId1 = client.nombre.toLowerCase().replace(/\s+/g, '_');
+  const baseId = clientId.split('_')[0];
+
   Object.keys(COMPLETED).forEach(key => {
     const parts = key.split('_');
     const dateStr = parts[parts.length - 1];
     const cId = parts.slice(0, -1).join('_');
-    if (cId === clientId) {
+    
+    if (cId === clientId || cId === baseName || cId === altId1 || cId === baseId || cId === client.nombre.toLowerCase()) {
       const val = COMPLETED[key];
-      const precio = typeof val === 'object' ? (val.precio || 0) : 0;
+      const isCancelled = typeof val === 'object' && val.cancelled;
+      
+      let precio = 0;
+      if (typeof val === 'object' && val.precio !== undefined) {
+        precio = val.precio;
+      } else if (val === true) {
+        precio = client.precio || 0;
+      }
+      if (isCancelled) precio = 0;
+      
       const fotos = typeof val === 'object' ? (val.fotos || []) : [];
-      history.push({ dateStr, precio, fotos });
+      
+      if (!history.find(h => h.dateStr === dateStr)) {
+        history.push({ dateStr, precio, fotos, cancelled: isCancelled });
+      }
     }
   });
   history.sort((a,b) => b.dateStr.localeCompare(a.dateStr));
@@ -4618,10 +4638,11 @@ function getClientHistory(clientId) {
 
 function renderClientHistory(clientId) {
   const history = getClientHistory(clientId);
+  const activeHistory = history.filter(h => !h.cancelled);
   const total = history.reduce((s,h) => s + h.precio, 0);
   
   let html = `<div class="history-summary">
-    <div class="history-stat"><div class="history-stat-num">${history.length}</div><div class="history-stat-label">Limpiezas</div></div>
+    <div class="history-stat"><div class="history-stat-num">${activeHistory.length}</div><div class="history-stat-label">Limpiezas</div></div>
     <div class="history-stat"><div class="history-stat-num" style="color:var(--success)">\u20ac${parseFloat(total.toFixed(2))}</div><div class="history-stat-label">Total Ganado</div></div>
   </div>`;
   
@@ -4633,14 +4654,15 @@ function renderClientHistory(clientId) {
       const [y,m,d] = h.dateStr.split('-').map(Number);
       const dateObj = new Date(y, m-1, d);
       const dayName = DIAS_SEMANA[dateObj.getDay()];
-      html += `<div class="history-item">
+      html += `<div class="history-item${h.cancelled ? ' cancelled' : ''}"${h.cancelled ? ' style="opacity:0.6"' : ''}>
         <div>
-          <span class="history-date">${dayName}, ${d} de ${MESES[m-1]} ${y}</span>
+          <span class="history-date" ${h.cancelled ? 'style="text-decoration:line-through"' : ''}>${dayName}, ${d} de ${MESES[m-1]} ${y}</span>
+          ${h.cancelled ? '<span style="color:var(--danger);font-size:11px;font-weight:600;margin-left:6px">(Cancelada)</span>' : ''}
           ${h.fotos.length > 0 ? `<div class="history-photos">${h.fotos.map(f => `<img class="history-photo-thumb" src="${f.data}" onclick="event.stopPropagation();openPhotoViewer('${f.data.substring(0,50)}...')" title="${f.tipo}">`).join('')}</div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="history-price">\u20ac${parseFloat(h.precio.toFixed(2))}</span>
-          <button class="admin-icon-btn" onclick="event.stopPropagation();generateInvoice('${clientId}','${h.dateStr}')" title="Generar recibo" style="font-size:11px">\ud83d\udcc4</button>
+          <span class="history-price" ${h.cancelled ? 'style="color:var(--mid)"' : ''}>\u20ac${parseFloat(h.precio.toFixed(2))}</span>
+          ${!h.cancelled ? `<button class="admin-icon-btn" onclick="event.stopPropagation();generateInvoice('${clientId}','${h.dateStr}')" title="Generar recibo" style="font-size:11px">\ud83d\udcc4</button>` : ''}
         </div>
       </div>`;
     });
