@@ -4070,10 +4070,13 @@ function saveClient() {
   
   const originalClient = editingId ? CLIENTS.find(c => c.id === editingId) : null;
   const isDayOrFreqChanged = originalClient && (originalClient.dia !== dia || originalClient.frecuencia !== frecuencia);
+  const isReactivated = originalClient && originalClient.activo === false && activo === true;
   
   let newFechaInicio = fechaUnica;
   if (frecuencia === 'unica') {
     newFechaInicio = fechaUnica;
+  } else if (editingId && isReactivated) {
+    newFechaInicio = fechaUnica || `${miniCalSelected.getFullYear()}-${String(miniCalSelected.getMonth()+1).padStart(2,'0')}-${String(miniCalSelected.getDate()).padStart(2,'0')}`;
   } else if (editingId && isDayOrFreqChanged) {
     if (fechaUnica) {
       newFechaInicio = fechaUnica;
