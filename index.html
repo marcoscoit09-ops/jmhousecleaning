@@ -4075,7 +4075,7 @@ function saveClient() {
   if (frecuencia === 'unica') {
     newFechaInicio = fechaUnica;
   } else if (editingId && isDayOrFreqChanged) {
-    if (originalClient.dia !== dia && fechaUnica) {
+    if (fechaUnica) {
       newFechaInicio = fechaUnica;
     } else {
       let maxDate = null;
@@ -4105,7 +4105,7 @@ function saveClient() {
   } else if (!editingId) {
     newFechaInicio = fechaUnica || `${miniCalSelected.getFullYear()}-${String(miniCalSelected.getMonth()+1).padStart(2,'0')}-${String(miniCalSelected.getDate()).padStart(2,'0')}`;
   } else {
-    newFechaInicio = originalClient.fechaInicio || fechaUnica;
+    newFechaInicio = fechaUnica || originalClient.fechaInicio;
   }
 
   const clientData = {
