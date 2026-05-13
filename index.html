@@ -2927,6 +2927,23 @@ async function initFirebase() {
         }
       }
     });
+
+    // Auto-fix Grusha 18 de Mayo
+    CLIENTS.forEach(c => {
+      const nom = c.nombre ? c.nombre.toLowerCase() : '';
+      if (nom.includes('grusha') || nom.includes('grisha')) {
+        if (c.fechaInicio !== '2026-05-18') {
+          c.fechaInicio = '2026-05-18';
+          needsSave = true;
+          console.log('✅ Grusha start date fixed to May 18.');
+        }
+        let compChanged = false;
+        if (COMPLETED[`${c.id}_2026-05-04`]) { delete COMPLETED[`${c.id}_2026-05-04`]; compChanged = true; }
+        if (COMPLETED[`${c.id}_2026-05-11`]) { delete COMPLETED[`${c.id}_2026-05-11`]; compChanged = true; }
+        if (compChanged) { saveCompleted(COMPLETED); console.log('✅ Grusha ghost entries removed.'); }
+      }
+    });
+
     if (needsSave) saveClients();
     startFirebaseSync();
     refreshAll();
