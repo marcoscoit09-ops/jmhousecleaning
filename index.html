@@ -1016,6 +1016,7 @@ body{
 .toast.show{opacity:1;pointer-events:auto}
 .toast.success{border-left:3px solid var(--success)}
 .toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid #007AFF}
 
 /* Delete confirmation */
 .confirm-overlay{
@@ -4210,14 +4211,14 @@ function confirmDeleteAction() {
 }
 
 // ===== TOAST =====
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', duration = 3000) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.className = `toast ${type} show`;
   clearTimeout(toast._timeout);
   toast._timeout = setTimeout(() => {
     toast.classList.remove('show');
-  }, 3000);
+  }, duration);
 }
 
 // ===== MIGRATE: Set fechaInicio on existing clients =====
@@ -4893,6 +4894,61 @@ function renderAnalytics() {
 }
 
 
+// ===== PDF SAVE HELPER =====
+// Smart cross-platform PDF downloader.
+// • iOS / Safari → opens in new tab → user taps 📤 Share → "Save to Files" or any app
+// • Chrome/Edge desktop (showSaveFilePicker) → native "Save As" dialog
+// • Everything else → standard <a download> click
+async function savePdfBlob(blob, filename) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isIOS || isSafari) {
+    // Open PDF in new tab — user uses Share Sheet (📤) to save
+    const url = URL.createObjectURL(blob);
+    const newTab = window.open(url, '_blank');
+    if (!newTab) {
+      // Popup blocked fallback: use inline link
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    showToast('📤 Toca Compartir (📤) para guardar el PDF', 'info', 4000);
+    return;
+  }
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'Archivo PDF', accept: {'application/pdf': ['.pdf']} }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch(err) {
+      if (err.name === 'AbortError') return;
+      // Fall through to standard download
+    }
+  }
+
+  // Standard download for Chrome Android, Firefox, etc.
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
 // ===== INVOICE / RECEIPT =====
 async function generateInvoice(clientId, dateStr) {
   const client = CLIENTS.find(c => c.id === clientId);
@@ -4979,32 +5035,8 @@ async function generateInvoice(clientId, dateStr) {
     // Download logic
     const filename = `Recibo_${client.nombre.replace(/\s+/g,'_')}_${dateStr}.pdf`;
     const pdfBlob = doc.output('blob');
-    
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [{ description: 'Archivo PDF', accept: {'application/pdf': ['.pdf']} }]
-        });
-        const writable = await handle.createWritable();
-        await writable.write(pdfBlob);
-        await writable.close();
-        showToast('📄 Recibo guardado correctamente', 'success');
-        return;
-      } catch(err) {
-        if (err.name === 'AbortError') return;
-      }
-    }
-    
-    // Fallback
-    const b64 = doc.output('datauristring');
-    const link = document.createElement('a');
-    link.href = b64;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('\ud83d\udcc4 Recibo PDF generado', 'success');
+    await savePdfBlob(pdfBlob, filename);
+    showToast('📄 Recibo PDF generado', 'success');
   } catch(e) {
     console.error('PDF generation error:', e);
     showToast('\u26a0\ufe0f Error al generar PDF', 'error');
@@ -6146,30 +6178,7 @@ async function downloadReportPDF() {
     // Download
     const filename = `Informe_Ejecutivo_${MESES[month]}_${year}_JM.pdf`;
     const pdfBlob = doc.output('blob');
-    
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [{ description: 'Archivo PDF', accept: {'application/pdf': ['.pdf']} }]
-        });
-        const writable = await handle.createWritable();
-        await writable.write(pdfBlob);
-        await writable.close();
-        showToast('📥 Informe PDF descargado', 'success');
-        return;
-      } catch(err) {
-        if (err.name === 'AbortError') return;
-      }
-    }
-    
-    const b64 = doc.output('datauristring');
-    const link = document.createElement('a');
-    link.href = b64;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    await savePdfBlob(pdfBlob, filename);
     showToast('📥 Informe PDF descargado', 'success');
   } catch (e) {
     console.error('Report PDF error:', e);
