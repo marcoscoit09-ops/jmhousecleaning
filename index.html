@@ -4665,7 +4665,8 @@ function renderClientHistory(clientId) {
   let html = `<div class="history-summary">
     <div class="history-stat"><div class="history-stat-num">${activeHistory.length}</div><div class="history-stat-label">Limpiezas</div></div>
     <div class="history-stat"><div class="history-stat-num" style="color:var(--success)">\u20ac${parseFloat(total.toFixed(2))}</div><div class="history-stat-label">Total Ganado</div></div>
-  </div>`;
+  </div>
+  ${activeHistory.length > 0 ? `<button onclick="generateFullHistory('${clientId}')" style="width:100%;margin-bottom:14px;padding:11px;background:linear-gradient(135deg,#1D1D1F,#3a3a3c);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📋 Descargar Historial Completo PDF</button>` : ''}`;
   
   if (history.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--mid)">A\u00fan no hay historial de servicios</div>';
@@ -4934,114 +4935,226 @@ async function savePdfBlob(blob, filename) {
       return;
     } catch(err) {
       if (err.name === 'AbortError') return;
-      // Fall through to standard download
     }
   }
 
-  // Standard download for Chrome Android, Firefox, etc.
-  const url = URL.createObjectURL(blob);
+  // Standard download (Android Chrome, Firefox, etc.)
+  const url2 = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  link.href = url2; link.download = filename;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url2), 5000);
 }
 
 // ===== INVOICE / RECEIPT =====
 async function generateInvoice(clientId, dateStr) {
   const client = CLIENTS.find(c => c.id === clientId);
   if (!client) return;
-  
   const compKey = `${clientId}_${dateStr}`;
   const precio = getCompletedPrice(compKey, client);
   const [y,m,d] = dateStr.split('-').map(Number);
-  
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    
-    // Header
-    doc.setFillColor(29, 29, 31);
-    doc.rect(0, 0, 210, 45, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('J&M House Cleaning', 20, 22);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Servicio Profesional de Limpieza · München', 20, 32);
-    
-    // Receipt number
+    const W = 210, MG = 20, CW = W - MG*2;
+
+    // HEADER
+    doc.setFillColor(29,29,31); doc.rect(0,0,W,42,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('J&M House Cleaning', MG, 20);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Servicio Profesional de Limpieza · München, Alemania', MG, 29);
     const recNum = `REC-${y}${String(m).padStart(2,'0')}${String(d).padStart(2,'0')}-${clientId.substring(0,4).toUpperCase()}`;
-    doc.setFontSize(10);
-    doc.text(`Recibo: ${recNum}`, 145, 22);
-    doc.text(`Fecha: ${d}/${m}/${y}`, 145, 30);
-    
-    // Client info
-    doc.setTextColor(29, 29, 31);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Datos del Cliente', 20, 60);
-    doc.setDrawColor(200);
-    doc.line(20, 63, 190, 63);
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Nombre: ${client.nombre}`, 20, 72);
-    doc.text(`Dirección: ${client.direccion}, ${client.ciudad}`, 20, 80);
-    if (client.telefono) doc.text(`Teléfono: ${client.telefono}`, 20, 88);
-    
-    // Service details
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Detalle del Servicio', 20, 105);
-    doc.line(20, 108, 190, 108);
-    
+    const todayD = new Date();
+    const issuedStr = `${todayD.getDate()}/${todayD.getMonth()+1}/${todayD.getFullYear()}`;
+    doc.setFontSize(8);
+    doc.text(`N\u00ba: ${recNum}`, W-MG, 18, {align:'right'});
+    doc.text(`Emitido: ${issuedStr}`, W-MG, 25, {align:'right'});
+
+    // BADGE
+    doc.setFillColor(52,199,89); doc.roundedRect(MG,50,36,9,2,2,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('RECIBO', MG+18, 56, {align:'center'});
+
+    // CLIENTE
+    let yy = 68;
+    doc.setTextColor(29,29,31); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text('Datos del Cliente', MG, yy);
+    doc.setDrawColor(220); doc.line(MG, yy+3, W-MG, yy+3);
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,67);
+    yy += 12;
+    doc.text('Cliente:', MG, yy); doc.setFont('helvetica','bold'); doc.setTextColor(29,29,31);
+    doc.text(client.nombre, MG+26, yy);
+    doc.setFont('helvetica','normal'); doc.setTextColor(60,60,67); yy += 8;
+    const dirSplit = doc.splitTextToSize(`${client.direccion||''}, ${client.ciudad||'M\u00fcnchen'}`, CW-26);
+    doc.text('Dir:', MG, yy); doc.text(dirSplit, MG+26, yy); yy += dirSplit.length*6;
+    if (client.telefono) { doc.text('Tel:', MG, yy); doc.text(client.telefono, MG+26, yy); yy += 8; }
+
+    // SERVICIO
+    yy += 6;
+    doc.setTextColor(29,29,31); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text('Detalle del Servicio', MG, yy);
+    doc.setDrawColor(220); doc.line(MG, yy+3, W-MG, yy+3); yy += 10;
+
     // Table header
-    doc.setFillColor(245, 245, 247);
-    doc.rect(20, 112, 170, 10, 'F');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Descripción', 25, 119);
-    doc.text('Fecha', 100, 119);
-    doc.text('Duración', 135, 119);
-    doc.text('Precio', 168, 119);
-    
+    doc.setFillColor(245,245,247); doc.rect(MG, yy, CW, 9,'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,90);
+    doc.text('Servicio', MG+4, yy+6);
+    doc.text('Fecha del servicio', MG+68, yy+6);
+    doc.text('Duraci\u00f3n', MG+120, yy+6);
+    doc.text('Precio', W-MG, yy+6, {align:'right'});
+    yy += 9;
+
     // Table row
-    doc.setFont('helvetica', 'normal');
-    doc.text('Limpieza doméstica', 25, 130);
-    doc.text(`${DIAS_SEMANA[new Date(y,m-1,d).getDay()]} ${d}/${m}/${y}`, 100, 130);
-    doc.text(client.duracionTexto, 135, 130);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`€${parseFloat(precio.toFixed(2))}`, 168, 130);
-    
-    doc.line(20, 135, 190, 135);
-    
+    doc.setFillColor(252,252,254); doc.rect(MG, yy, CW, 10, 'F');
+    doc.setFont('helvetica','normal'); doc.setTextColor(29,29,31); doc.setFontSize(10);
+    const svcDate = `${DIAS_SEMANA[new Date(y,m-1,d).getDay()]} ${d}/${m}/${y}`;
+    doc.text('Limpieza dom\u00e9stica', MG+4, yy+7);
+    doc.text(svcDate, MG+68, yy+7);
+    doc.text(client.duracionTexto||'', MG+120, yy+7);
+    doc.setFont('helvetica','bold');
+    doc.text(`\u20ac${precio.toFixed(2)}`, W-MG, yy+7, {align:'right'});
+    yy += 10;
+
     // Total
-    doc.setFontSize(14);
-    doc.text('TOTAL:', 135, 148);
-    doc.setTextColor(52, 199, 89);
-    doc.text(`€${parseFloat(precio.toFixed(2))}`, 168, 148);
-    
+    doc.setDrawColor(200); doc.line(MG, yy+4, W-MG, yy+4); yy += 12;
+    doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(29,29,31);
+    doc.text('TOTAL A PAGAR:', MG+76, yy);
+    doc.setTextColor(52,199,89); doc.setFontSize(14);
+    doc.text(`\u20ac${precio.toFixed(2)}`, W-MG, yy, {align:'right'});
+
     // Footer
-    doc.setTextColor(134, 134, 139);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Gracias por confiar en J&M House Cleaning', 105, 270, { align: 'center' });
-    doc.text('München, Alemania', 105, 276, { align: 'center' });
-    
-    // Download logic
+    doc.setTextColor(160,160,170); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.line(MG, 275, W-MG, 275);
+    doc.text('Gracias por confiar en J&M House Cleaning', W/2, 281, {align:'center'});
+    doc.text('M\u00fcnchen, Alemania', W/2, 287, {align:'center'});
+
     const filename = `Recibo_${client.nombre.replace(/\s+/g,'_')}_${dateStr}.pdf`;
-    const pdfBlob = doc.output('blob');
-    await savePdfBlob(pdfBlob, filename);
-    showToast('📄 Recibo PDF generado', 'success');
+    await savePdfBlob(doc.output('blob'), filename);
+    showToast('\ud83d\udcc4 Recibo generado', 'success');
   } catch(e) {
-    console.error('PDF generation error:', e);
-    showToast('\u26a0\ufe0f Error al generar PDF', 'error');
+    console.error('Invoice error:', e);
+    showToast('\u26a0\ufe0f Error al generar recibo', 'error');
   }
 }
+
+// ===== HISTORIAL COMPLETO PDF =====
+async function generateFullHistory(clientId) {
+  const client = CLIENTS.find(c => c.id === clientId);
+  if (!client) return;
+  const history = getClientHistory(clientId).filter(h => !h.cancelled);
+  if (history.length === 0) { showToast('Sin limpiezas registradas', 'error'); return; }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const W = 210, MG = 20, CW = W - MG*2;
+    const todayD = new Date();
+    const issuedStr = `${todayD.getDate()}/${todayD.getMonth()+1}/${todayD.getFullYear()}`;
+    const totalGeneral = history.reduce((s,h) => s+h.precio, 0);
+
+    // HEADER
+    doc.setFillColor(29,29,31); doc.rect(0,0,W,42,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('J&M House Cleaning', MG, 20);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Servicio Profesional de Limpieza · M\u00fcnchen, Alemania', MG, 29);
+    doc.setFontSize(8);
+    doc.text(`Generado: ${issuedStr}`, W-MG, 25, {align:'right'});
+
+    // BADGE
+    doc.setFillColor(0,122,255); doc.roundedRect(MG,50,54,9,2,2,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('HISTORIAL COMPLETO', MG+27, 56, {align:'center'});
+
+    // CLIENTE
+    let yy = 68;
+    doc.setTextColor(29,29,31); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text('Datos del Cliente', MG, yy);
+    doc.setDrawColor(220); doc.line(MG, yy+3, W-MG, yy+3);
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(60,60,67);
+    yy += 12;
+    doc.text('Cliente:', MG, yy); doc.setFont('helvetica','bold'); doc.setTextColor(29,29,31);
+    doc.text(client.nombre, MG+26, yy);
+    doc.setFont('helvetica','normal'); doc.setTextColor(60,60,67); yy += 8;
+    const dir2 = doc.splitTextToSize(`${client.direccion||''}, ${client.ciudad||'M\u00fcnchen'}`, CW-26);
+    doc.text('Dir:', MG, yy); doc.text(dir2, MG+26, yy); yy += dir2.length*6;
+    if (client.telefono) { doc.text('Tel:', MG, yy); doc.text(client.telefono, MG+26, yy); yy += 8; }
+
+    // RESUMEN
+    yy += 4;
+    doc.setFillColor(245,245,247); doc.rect(MG, yy, CW, 16, 'F');
+    doc.setTextColor(80,80,90); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text(`Total de limpiezas: ${history.length}`, MG+4, yy+7);
+    doc.text(`Duraci\u00f3n por sesi\u00f3n: ${client.duracionTexto||''}`, MG+4, yy+13);
+    doc.setFont('helvetica','bold'); doc.setTextColor(52,199,89); doc.setFontSize(11);
+    doc.text(`TOTAL: \u20ac${totalGeneral.toFixed(2)}`, W-MG-4, yy+10, {align:'right'});
+    yy += 22;
+
+    // TABLE HEADER
+    doc.setTextColor(29,29,31); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text('Detalle de Servicios', MG, yy);
+    doc.setDrawColor(220); doc.line(MG, yy+3, W-MG, yy+3); yy += 10;
+
+    const drawTableHeader = (yPos) => {
+      doc.setFillColor(29,29,31); doc.rect(MG, yPos, CW, 9, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text('#', MG+3, yPos+6);
+      doc.text('Fecha', MG+14, yPos+6);
+      doc.text('D\u00eda', MG+54, yPos+6);
+      doc.text('Servicio', MG+90, yPos+6);
+      doc.text('Precio', W-MG-2, yPos+6, {align:'right'});
+      return yPos+9;
+    };
+    yy = drawTableHeader(yy);
+
+    history.forEach((h, idx) => {
+      if (yy > 258) {
+        doc.addPage(); yy = 20;
+        yy = drawTableHeader(yy);
+      }
+      const [hy,hm,hd] = h.dateStr.split('-').map(Number);
+      const dayName = DIAS_SEMANA[new Date(hy,hm-1,hd).getDay()];
+      if (idx%2===0) { doc.setFillColor(250,250,252); doc.rect(MG,yy,CW,8,'F'); }
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(29,29,31);
+      doc.text(`${idx+1}`, MG+3, yy+5.5);
+      doc.text(`${hd}/${hm}/${hy}`, MG+14, yy+5.5);
+      doc.text(dayName, MG+54, yy+5.5);
+      doc.text('Limpieza dom\u00e9stica', MG+90, yy+5.5);
+      doc.setFont('helvetica','bold');
+      doc.text(`\u20ac${h.precio.toFixed(2)}`, W-MG-2, yy+5.5, {align:'right'});
+      yy += 8;
+    });
+
+    // TOTAL FINAL
+    doc.setDrawColor(180); doc.line(MG, yy+2, W-MG, yy+2); yy += 8;
+    doc.setFillColor(29,29,31); doc.rect(MG+70, yy-2, CW-70, 11, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
+    doc.text('TOTAL GENERAL:', MG+74, yy+6);
+    doc.setTextColor(52,199,89);
+    doc.text(`\u20ac${totalGeneral.toFixed(2)}`, W-MG-4, yy+6, {align:'right'});
+
+    // FOOTER en todas las páginas
+    const pageCount = doc.getNumberOfPages();
+    for (let p=1; p<=pageCount; p++) {
+      doc.setPage(p);
+      doc.setTextColor(160,160,170); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.line(MG, 282, W-MG, 282);
+      doc.text('J&M House Cleaning · M\u00fcnchen, Alemania', W/2, 287, {align:'center'});
+      doc.text(`P\u00e1g. ${p}/${pageCount}`, W-MG, 287, {align:'right'});
+    }
+
+    const fname = `Historial_${client.nombre.replace(/\s+/g,'_')}_${issuedStr.replace(/\//g,'-')}.pdf`;
+    await savePdfBlob(doc.output('blob'), fname);
+    showToast('\ud83d\udccb Historial PDF generado', 'success');
+  } catch(e) {
+    console.error('Full history PDF error:', e);
+    showToast('\u26a0\ufe0f Error al generar historial', 'error');
+  }
+}
+
 
 // ===== UPDATED NET EARNINGS =====
 // Override updateEarnings to include net calculation
