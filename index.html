@@ -1405,11 +1405,16 @@ body{
 }
 
 /* ===== TODAY DASHBOARD ===== */
+#todayDashboard{
+  max-width:1120px;
+  margin:0 auto;
+  padding:32px 40px 0;
+}
 .today-dashboard{
   background:linear-gradient(135deg,#1D1D1F 0%,#2C2C2E 100%);
   border-radius:var(--radius);
   padding:28px 28px 20px;
-  margin-bottom:32px;
+  margin-bottom:0;
   color:var(--white);
   position:relative;
   overflow:hidden;
@@ -2263,6 +2268,9 @@ body{
   </div>
 </div>
 
+<!-- TODAY DASHBOARD (siempre arriba) -->
+<div id="todayDashboard"></div>
+
 <!-- EARNINGS BAR -->
 <div class="earnings-bar">
   <div class="earnings-inner">
@@ -2290,8 +2298,6 @@ body{
 
 <!-- MAIN CONTENT -->
 <div class="main-content">
-  <!-- TODAY DASHBOARD -->
-  <div id="todayDashboard"></div>
 
   <!-- WORK TRACKER -->
   <div class="work-tracker" id="workTracker">
@@ -4405,14 +4411,7 @@ function renderTodayDashboard() {
   const today = new Date(now);
   today.setHours(0,0,0,0);
   
-  // Only show when viewing the current week
-  const monday = getMonday(new Date());
-  const viewMonday = new Date(currentWeekStart);
-  if (monday.getTime() !== viewMonday.getTime()) {
-    container.innerHTML = '';
-    return;
-  }
-  
+  // Siempre muestra las citas de HOY, sin importar qué semana se esté viendo
   const todayClients = CLIENTS.filter(c => clientAppliesToDate(c, today))
     .sort((a,b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
   
