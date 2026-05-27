@@ -2972,6 +2972,12 @@ function toggleCompletion(clientId, dateStr, event) {
   // If it's cancelled, uncancel first
   if (existing && typeof existing === 'object' && existing.cancelled) {
     delete COMPLETED[key];
+  } else if (existing && typeof existing === 'object' && !existing.cancelled && !existing.metodo_pago) {
+    // Completada pero sin método de pago — mostrar modal para capturarlo
+    const client = CLIENTS.find(c => c.id === clientId);
+    const precio = getCompletedPrice(key, client);
+    mostrarModalMetodoPago(clientId, dateStr, precio, client);
+    return;
   } else if (existing && !(typeof existing === 'object' && existing.cancelled)) {
     delete COMPLETED[key];
   } else {
@@ -3018,6 +3024,16 @@ function mostrarModalMetodoPago(clientId, dateStr, precio, client) {
     <button class="modal-btn secondary" onclick="closeModalForce()">Cancelar</button>
   `;
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+// Abre el modal para CAMBIAR el método de pago de una limpieza ya completada
+function cambiarMetodoPago(clientId, dateStr) {
+  const key = `${clientId}_${dateStr}`;
+  const compData = COMPLETED[key];
+  if (!compData) return;
+  const client = CLIENTS.find(c => c.id === clientId);
+  const precio = getCompletedPrice(key, client);
+  mostrarModalMetodoPago(clientId, dateStr, precio, client);
 }
 
 // Guarda la limpieza completada con el método de pago elegido
@@ -3538,7 +3554,7 @@ function renderWeekGrid() {
                 <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && precio > 0 ? ` · €${precio}` : ''}</div>
                 ${isCancelled ? '<div class="apt-cancel-badge">✕ Cancelada</div>' : ''}
                 ${isDone ? `<div class="apt-earned">
-                  <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="${compData.metodo_pago}">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
+                  <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="Cambiar método de pago" onclick="event.stopPropagation();cambiarMetodoPago('${client.id}','${dateStr}')">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
                 </div>
                 <label class="photo-upload-btn" onclick="event.stopPropagation();triggerPhotoUpload('${client.id}','${dateStr}',event)">📷 ${photos.length > 0 ? photos.length + ' foto' + (photos.length !== 1 ? 's' : '') : 'Agregar foto'}</label>` : ''}
                 ${phoneClean && !isCancelled ? `<div class="apt-contact-row">
