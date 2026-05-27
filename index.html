@@ -2969,38 +2969,37 @@ function toggleCompletion(clientId, dateStr, event) {
   if (event) event.stopPropagation();
   const key = `${clientId}_${dateStr}`;
   const existing = COMPLETED[key];
-  // If it's cancelled, uncancel first
+
   if (existing && typeof existing === 'object' && existing.cancelled) {
+    // Si está cancelada: descancelar directamente
     delete COMPLETED[key];
-  } else if (existing && typeof existing === 'object' && !existing.cancelled && !existing.metodo_pago) {
-    // Completada pero sin método de pago — mostrar modal para capturarlo
+    saveCompleted(COMPLETED);
+    renderWeekGrid();
+    if (calendarView === 'mensual') renderMonthGrid();
+    renderWorkTracker();
+    updateStats();
+    updateEarnings();
+  } else if (existing) {
+    // Ya está completada: mostrar modal para cambiar método o desmarcar
     const client = CLIENTS.find(c => c.id === clientId);
     const precio = getCompletedPrice(key, client);
-    mostrarModalMetodoPago(clientId, dateStr, precio, client);
-    return;
-  } else if (existing && !(typeof existing === 'object' && existing.cancelled)) {
-    delete COMPLETED[key];
+    mostrarModalMetodoPago(clientId, dateStr, precio, client, true);
   } else {
-    // NUEVO: preguntar método de pago antes de guardar
+    // No está marcada: mostrar modal para elegir método y confirmar
     const client = CLIENTS.find(c => c.id === clientId);
     const precio = client ? (client.precio || 0) : 0;
-    mostrarModalMetodoPago(clientId, dateStr, precio, client);
-    return; // No guardar aún — se guarda al elegir método
+    mostrarModalMetodoPago(clientId, dateStr, precio, client, false);
   }
-  saveCompleted(COMPLETED);
-  renderWeekGrid();
-  if (calendarView === 'mensual') renderMonthGrid();
-  renderWorkTracker();
-  updateStats();
-  updateEarnings();
 }
 
 // Muestra el modal para elegir cómo se cobró la limpieza
-function mostrarModalMetodoPago(clientId, dateStr, precio, client) {
+// yaCompletada=true cuando la limpieza ya está marcada (para cambiar método o desmarcar)
+function mostrarModalMetodoPago(clientId, dateStr, precio, client, yaCompletada) {
   const nombre = client ? client.nombre.split(' ')[0] : clientId;
   const isHelpling = client && (client.origen || 'nuestro') === 'app';
+  const titulo = yaCompletada ? '💳 Método de pago' : '💳 ¿Cómo se cobra?';
 
-  document.getElementById('modalTitle').innerHTML = `💳 ¿Cómo se cobra?`;
+  document.getElementById('modalTitle').innerHTML = titulo;
   document.getElementById('modalBody').innerHTML = `
     <div style="padding: 8px 0 4px; color: var(--mid); font-size: 13px;">
       ${nombre} · <strong>€${parseFloat(precio.toFixed(2))}</strong>
@@ -3018,12 +3017,29 @@ function mostrarModalMetodoPago(clientId, dateStr, precio, client) {
         onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'helpling')">
         📱 <span>Helpling / App</span>
       </button>
+      ${yaCompletada ? `<button class="modal-btn danger" style="font-size:14px;padding:12px;justify-content:center;display:flex;gap:8px;align-items:center;margin-top:4px"
+        onclick="desmarcarLimpieza('${clientId}','${dateStr}')">
+        ✕ <span>Desmarcar como hecha</span>
+      </button>` : ''}
     </div>
   `;
   document.getElementById('modalActions').innerHTML = `
     <button class="modal-btn secondary" onclick="closeModalForce()">Cancelar</button>
   `;
   document.getElementById('modalOverlay').classList.add('open');
+}
+
+// Desmarca una limpieza completada (acción explícita desde el modal)
+function desmarcarLimpieza(clientId, dateStr) {
+  closeModalForce();
+  const key = `${clientId}_${dateStr}`;
+  delete COMPLETED[key];
+  saveCompleted(COMPLETED);
+  renderWeekGrid();
+  if (calendarView === 'mensual') renderMonthGrid();
+  renderWorkTracker();
+  updateStats();
+  updateEarnings();
 }
 
 // Abre el modal para CAMBIAR el método de pago de una limpieza ya completada
