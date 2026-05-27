@@ -2999,21 +2999,34 @@ function mostrarModalMetodoPago(clientId, dateStr, precio, client, yaCompletada)
   const isHelpling = client && (client.origen || 'nuestro') === 'app';
   const titulo = yaCompletada ? '💳 Método de pago' : '💳 ¿Cómo se cobra?';
 
+  // Leer el método actual si ya está completada
+  const key = `${clientId}_${dateStr}`;
+  const compData = COMPLETED[key];
+  const metodoPagoActual = (compData && typeof compData === 'object') ? (compData.metodo_pago || null) : null;
+
+  // Función para determinar la clase del botón según si es el método actual
+  const btnClass = (metodo) => metodoPagoActual === metodo ? 'primary' : 'secondary';
+  const btnStyle = (metodo) => {
+    if (metodo === 'helpling' && (isHelpling || metodoPagoActual === 'helpling')) return 'border-color:rgba(76,175,80,0.4);color:#2e7d32;';
+    return '';
+  };
+
   document.getElementById('modalTitle').innerHTML = titulo;
   document.getElementById('modalBody').innerHTML = `
     <div style="padding: 8px 0 4px; color: var(--mid); font-size: 13px;">
       ${nombre} · <strong>€${parseFloat(precio.toFixed(2))}</strong>
+      ${metodoPagoActual ? `<span style="margin-left:6px;opacity:0.6;font-size:11px;">(actual: ${metodoPagoActual === 'efectivo' ? '💵' : metodoPagoActual === 'transferencia' ? '🏦' : '📱'})</span>` : ''}
     </div>
     <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
-      <button class="modal-btn primary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
+      <button class="modal-btn ${btnClass('efectivo')}" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
         onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'efectivo')">
         💵 <span>Efectivo</span>
       </button>
-      <button class="modal-btn secondary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
+      <button class="modal-btn ${btnClass('transferencia')}" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
         onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'transferencia')">
         🏦 <span>Transferencia</span>
       </button>
-      <button class="modal-btn secondary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center;${isHelpling ? 'border-color:rgba(76,175,80,0.4);color:#2e7d32;' : ''}"
+      <button class="modal-btn ${btnClass('helpling')}" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center;${btnStyle('helpling')}"
         onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'helpling')">
         📱 <span>Helpling / App</span>
       </button>
@@ -3416,8 +3429,10 @@ function updateEarnings() {
     }
   } else {
     // Monthly: sum all completed in the VIEWED month
+    // Usamos el viernes (+4) en vez del miércoles (+3) para que semanas que
+    // cruzan el inicio de mes (ej: lun 27/4 — vie 1/5) se contabilicen en el mes nuevo
     const viewedDate = new Date(currentWeekStart);
-    viewedDate.setDate(viewedDate.getDate() + 3); // Mid-week to get the right month
+    viewedDate.setDate(viewedDate.getDate() + 4); // Viernes de la semana → mes correcto
     const year = viewedDate.getFullYear();
     const month = viewedDate.getMonth();
     
