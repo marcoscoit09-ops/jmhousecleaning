@@ -1385,6 +1385,12 @@ body{
 .apt-earned-amount:hover{
   background:rgba(52,199,89,0.1);
 }
+.apt-metodo-badge{
+  font-size:11px;
+  line-height:1;
+  opacity:0.85;
+  cursor:default;
+}
 .apt-earned-edit{
   width:60px;
   padding:2px 6px;
@@ -2275,6 +2281,10 @@ body{
   <div id="monthlyBreakdown" style="display:none; max-width: 1120px; margin: 0 auto; padding: 16px 40px; background: #FAFAFA; border-top: 1px solid rgba(0,0,0,0.06);">
     <h4 style="font-size: 13px; color: var(--mid); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em;">Desglose por cliente</h4>
     <div id="monthlyBreakdownList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;"></div>
+    <div id="liquidezBreakdown" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.07);">
+      <h4 style="font-size: 13px; color: var(--mid); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;">💧 Liquidez — Origen del ingreso</h4>
+      <div id="liquidezList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+    </div>
   </div>
 </div>
 
@@ -2965,11 +2975,60 @@ function toggleCompletion(clientId, dateStr, event) {
   } else if (existing && !(typeof existing === 'object' && existing.cancelled)) {
     delete COMPLETED[key];
   } else {
-    // Save the price at the moment of completion
+    // NUEVO: preguntar método de pago antes de guardar
     const client = CLIENTS.find(c => c.id === clientId);
     const precio = client ? (client.precio || 0) : 0;
-    COMPLETED[key] = { precio: precio, timestamp_completado: new Date().toISOString() };
+    mostrarModalMetodoPago(clientId, dateStr, precio, client);
+    return; // No guardar aún — se guarda al elegir método
   }
+  saveCompleted(COMPLETED);
+  renderWeekGrid();
+  if (calendarView === 'mensual') renderMonthGrid();
+  renderWorkTracker();
+  updateStats();
+  updateEarnings();
+}
+
+// Muestra el modal para elegir cómo se cobró la limpieza
+function mostrarModalMetodoPago(clientId, dateStr, precio, client) {
+  const nombre = client ? client.nombre.split(' ')[0] : clientId;
+  const isHelpling = client && (client.origen || 'nuestro') === 'app';
+
+  document.getElementById('modalTitle').innerHTML = `💳 ¿Cómo se cobra?`;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="padding: 8px 0 4px; color: var(--mid); font-size: 13px;">
+      ${nombre} · <strong>€${parseFloat(precio.toFixed(2))}</strong>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+      <button class="modal-btn primary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
+        onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'efectivo')">
+        💵 <span>Efectivo</span>
+      </button>
+      <button class="modal-btn secondary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center"
+        onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'transferencia')">
+        🏦 <span>Transferencia</span>
+      </button>
+      <button class="modal-btn secondary" style="font-size:15px;padding:14px;justify-content:center;display:flex;gap:8px;align-items:center;${isHelpling ? 'border-color:rgba(76,175,80,0.4);color:#2e7d32;' : ''}"
+        onclick="completarLimpieza('${clientId}','${dateStr}',${precio},'helpling')">
+        📱 <span>Helpling / App</span>
+      </button>
+    </div>
+  `;
+  document.getElementById('modalActions').innerHTML = `
+    <button class="modal-btn secondary" onclick="closeModalForce()">Cancelar</button>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+// Guarda la limpieza completada con el método de pago elegido
+function completarLimpieza(clientId, dateStr, precio, metodo) {
+  closeModalForce();
+  const key = `${clientId}_${dateStr}`;
+  COMPLETED[key] = {
+    precio: precio,
+    timestamp_completado: new Date().toISOString(),
+    metodo_pago: metodo
+  };
   saveCompleted(COMPLETED);
   renderWeekGrid();
   if (calendarView === 'mensual') renderMonthGrid();
@@ -3332,7 +3391,7 @@ function updateEarnings() {
     
     // --- AUDIT LOG PARA VERIFICAR CADA CENTAVO ---
     const auditLog = [];
-    
+
     Object.keys(COMPLETED).forEach(key => {
       const parts = key.split('_');
       const dateStr = parts[parts.length - 1];
@@ -3342,26 +3401,29 @@ function updateEarnings() {
         const client = CLIENTS.find(c => c.id === clientId);
         if (!client) return; // Ignore deleted clients
         const price = getCompletedPrice(key, client);
-        
+        const compData = COMPLETED[key];
+        const metodo = (typeof compData === 'object' && compData.metodo_pago) ? compData.metodo_pago : null;
+
         auditLog.push({
           Identificador: clientId,
           Nombre: client.nombre,
           FechaCobro: dateStr,
-          Monto: price
+          Monto: price,
+          MetodoPago: metodo || '—'
         });
-        
+
         totalEarned += price;
         completedCount++;
       }
     });
-    
+
     console.group(`💸 AUDITORIA DE INGRESOS - ${MESES[month]} ${year}`);
     console.table(auditLog);
     console.log(`TOTAL SUMADO: €${totalEarned.toFixed(2)}`);
     console.groupEnd();
-    
+
     document.getElementById('earningsSublabel').textContent = `Ganancias ${MESES[month]} ${year} · ${completedCount} limpieza${completedCount !== 1 ? 's' : ''} completada${completedCount !== 1 ? 's' : ''}`;
-    
+
     // RENDER MONTHLY BREAKDOWN
     const breakdownList = document.getElementById('monthlyBreakdownList');
     if (breakdownList) {
@@ -3380,6 +3442,37 @@ function updateEarnings() {
           </div>
         `;
       });
+
+      // DESGLOSE DE LIQUIDEZ POR MÉTODO DE PAGO
+      const liquidezList = document.getElementById('liquidezList');
+      if (liquidezList) {
+        const porMetodo = { efectivo: 0, transferencia: 0, helpling: 0, sin_especificar: 0 };
+        auditLog.forEach(log => {
+          if (log.MetodoPago === 'efectivo') porMetodo.efectivo += log.Monto;
+          else if (log.MetodoPago === 'transferencia') porMetodo.transferencia += log.Monto;
+          else if (log.MetodoPago === 'helpling') porMetodo.helpling += log.Monto;
+          else porMetodo.sin_especificar += log.Monto;
+        });
+        const metodoItems = [
+          { emoji: '💵', label: 'Efectivo', key: 'efectivo', color: '#34c759', desc: 'Disponible ya' },
+          { emoji: '🏦', label: 'Transferencia', key: 'transferencia', color: '#007aff', desc: 'Disponible ya' },
+          { emoji: '📱', label: 'Helpling / App', key: 'helpling', color: '#ff9500', desc: 'Pendiente de recibir' },
+        ];
+        if (porMetodo.sin_especificar > 0) {
+          metodoItems.push({ emoji: '❓', label: 'Sin especificar', key: 'sin_especificar', color: '#8e8e93', desc: 'Sin método registrado' });
+        }
+        liquidezList.innerHTML = metodoItems.map(item => {
+          const val = porMetodo[item.key];
+          if (val === 0) return '';
+          return `<div style="background:white;padding:10px 16px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);display:flex;flex-direction:column;gap:2px;min-width:140px;">
+            <div style="font-size:18px;line-height:1.2">${item.emoji}</div>
+            <div style="font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">${item.label}</div>
+            <div style="font-size:18px;font-weight:800;color:${item.color}">€${val.toFixed(2)}</div>
+            <div style="font-size:10px;color:var(--mid)">${item.desc}</div>
+          </div>`;
+        }).join('');
+      }
+
       document.getElementById('monthlyBreakdown').style.display = 'block';
     }
   }
@@ -3445,7 +3538,7 @@ function renderWeekGrid() {
                 <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && precio > 0 ? ` · €${precio}` : ''}</div>
                 ${isCancelled ? '<div class="apt-cancel-badge">✕ Cancelada</div>' : ''}
                 ${isDone ? `<div class="apt-earned">
-                  <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>
+                  <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="${compData.metodo_pago}">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
                 </div>
                 <label class="photo-upload-btn" onclick="event.stopPropagation();triggerPhotoUpload('${client.id}','${dateStr}',event)">📷 ${photos.length > 0 ? photos.length + ' foto' + (photos.length !== 1 ? 's' : '') : 'Agregar foto'}</label>` : ''}
                 ${phoneClean && !isCancelled ? `<div class="apt-contact-row">
