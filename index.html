@@ -1404,17 +1404,58 @@ body{
   background:rgba(52,199,89,0.04);
 }
 
+/* ===== PRICE HISTORY EDITOR ===== */
+.price-history-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+.price-history-row .form-input{
+  padding:7px 10px;
+  font-size:13px;
+}
+.price-history-row .ph-desde{flex:1}
+.price-history-row .ph-precio{width:90px}
+.price-history-row .ph-del{
+  background:var(--danger);
+  color:#fff;
+  border:none;
+  border-radius:7px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:13px;
+  flex-shrink:0;
+}
+.price-history-label{
+  font-size:11px;
+  color:var(--text-muted);
+  margin-bottom:6px;
+}
+.ph-add-btn{
+  width:100%;
+  padding:8px;
+  background:rgba(0,122,255,0.08);
+  color:var(--accent);
+  border:1.5px dashed var(--accent);
+  border-radius:8px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:2px;
+}
+.ph-add-btn:hover{background:rgba(0,122,255,0.14)}
+
 /* ===== TODAY DASHBOARD ===== */
 #todayDashboard{
   max-width:1120px;
   margin:0 auto;
-  padding:32px 40px 0;
 }
 .today-dashboard{
   background:linear-gradient(135deg,#1D1D1F 0%,#2C2C2E 100%);
   border-radius:var(--radius);
   padding:28px 28px 20px;
-  margin-bottom:0;
+  margin-bottom:32px;
   color:var(--white);
   position:relative;
   overflow:hidden;
@@ -2463,8 +2504,16 @@ body{
         </div>
 
         <div class="form-group">
-          <label class="form-label">Precio (€)</label>
+          <label class="form-label">Precio actual (€)</label>
           <input type="number" class="form-input" id="fPrecio" min="0" step="5" value="0" placeholder="Ej: 80">
+        </div>
+
+        <!-- Historial de precios (solo visible al editar) -->
+        <div class="form-group" id="precioHistorialGroup" style="display:none">
+          <label class="form-label">📅 Historial de Precios <span style="font-size:11px;color:var(--text-muted);font-weight:400">(corrige precios en limpiezas antiguas)</span></label>
+          <p class="price-history-label">Si el precio cambió en algún momento, agrega cada período con su fecha de inicio y precio.</p>
+          <div id="precioHistorialRows"></div>
+          <button type="button" class="ph-add-btn" onclick="addPriceHistoryRow()">+ Agregar período</button>
         </div>
 
         <div class="form-group">
@@ -3107,13 +3156,31 @@ function toggleCancellation(clientId, dateStr, event) {
   updateEarnings();
 }
 
+// Returns the price that was in effect for a client on a given date
+function getPrecioEnFecha(client, dateStr) {
+  const historial = client.historial_precios;
+  if (!historial || historial.length === 0) return client.precio || 0;
+  // Sort ascending by date
+  const sorted = [...historial].sort((a, b) => a.desde.localeCompare(b.desde));
+  // Find the most recent entry whose 'desde' <= dateStr
+  let precio = sorted[0].precio;
+  for (const entry of sorted) {
+    if (entry.desde <= dateStr) precio = entry.precio;
+    else break;
+  }
+  return precio;
+}
+
 // Get the stored price for a completed appointment (backward compat)
 function getCompletedPrice(key, fallbackClient) {
   const val = COMPLETED[key];
   if (!val) return 0;
   if (typeof val === 'object' && val.precio !== undefined) return val.precio;
-  // Legacy: value is true, use client's current price
-  if (fallbackClient) return fallbackClient.precio || 0;
+  // Legacy: value is true — use the price that was effective on that date (not today's price)
+  if (fallbackClient) {
+    const dateStr = key.slice(-10); // key format: clientId_YYYY-MM-DD
+    return getPrecioEnFecha(fallbackClient, dateStr);
+  }
   return 0;
 }
 
@@ -4048,14 +4115,24 @@ function showEditForm(clientId) {
   document.getElementById('fDia').value = client.dia;
   document.getElementById('fFechaUnica').value = client.fechaUnica || '';
   renderMiniCalendar();
-  
+
   document.getElementById('fFrecuencia').value = freq;
   onFrecuenciaChange();
   document.getElementById('fCiudad').value = client.ciudad;
   document.getElementById('fOrigen').value = client.origen || 'nuestro';
   document.getElementById('fAcceso').value = client.acceso || '';
   document.getElementById('fNotas').value = client.notas || '';
-  
+
+  // Historial de precios
+  const phGroup = document.getElementById('precioHistorialGroup');
+  if (phGroup) {
+    phGroup.style.display = 'block';
+    _editingPriceHistory = client.historial_precios && client.historial_precios.length > 0
+      ? JSON.parse(JSON.stringify(client.historial_precios)) // deep copy
+      : [{ desde: client.fechaInicio || '2020-01-01', precio: client.precio || 0 }];
+    renderPriceHistoryForm();
+  }
+
   // Set color
   document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
   const colorEl = document.querySelector(`.color-option[data-color="${client.color}"]`);
@@ -4063,9 +4140,44 @@ function showEditForm(clientId) {
   else document.querySelector('.color-option').classList.add('selected');
 }
 
+// ===== HISTORIAL DE PRECIOS (editor en el formulario) =====
+let _editingPriceHistory = [];
+
+function renderPriceHistoryForm() {
+  const rows = document.getElementById('precioHistorialRows');
+  if (!rows) return;
+  const sorted = [..._editingPriceHistory].sort((a, b) => a.desde.localeCompare(b.desde));
+  _editingPriceHistory = sorted;
+  rows.innerHTML = sorted.map((entry, i) => `
+    <div class="price-history-row">
+      <input type="date" value="${entry.desde}" class="form-input ph-desde"
+        onchange="_editingPriceHistory[${i}].desde=this.value;renderPriceHistoryForm()">
+      <span style="font-size:13px;color:var(--text-muted);flex-shrink:0">→ €</span>
+      <input type="number" value="${entry.precio}" min="0" step="0.01" class="form-input ph-precio"
+        onchange="_editingPriceHistory[${i}].precio=parseFloat(this.value)||0">
+      ${sorted.length > 1
+        ? `<button class="ph-del" onclick="_editingPriceHistory.splice(${i},1);renderPriceHistoryForm()">✕</button>`
+        : ''}
+    </div>
+  `).join('');
+}
+
+function addPriceHistoryRow() {
+  const today = new Date().toISOString().split('T')[0];
+  const last = _editingPriceHistory.length > 0
+    ? _editingPriceHistory[_editingPriceHistory.length - 1]
+    : { precio: parseFloat(document.getElementById('fPrecio').value) || 0 };
+  _editingPriceHistory.push({ desde: today, precio: last.precio });
+  renderPriceHistoryForm();
+}
+
 function cancelForm() {
   document.getElementById('adminForm').classList.remove('active');
   document.getElementById('adminListView').style.display = 'block';
+  // Reset price history editor
+  _editingPriceHistory = [];
+  const group = document.getElementById('precioHistorialGroup');
+  if (group) group.style.display = 'none';
 }
 
 function selectColor(el) {
@@ -4275,6 +4387,42 @@ function saveClient() {
     newFechaInicio = fechaUnica || originalClient.fechaInicio;
   }
 
+  // ── Historial de precios ───────────────────────────────────────────────────
+  // Guardamos cuándo cambió el precio para poder recuperar el precio correcto
+  // de limpiezas pasadas aunque el precio actual sea diferente.
+  let historialPrecios;
+  if (!editingId) {
+    // Cliente nuevo: inicializar historial con la fecha de inicio
+    const desde0 = newFechaInicio || new Date().toISOString().split('T')[0];
+    historialPrecios = [{ desde: desde0, precio: precio }];
+  } else if (_editingPriceHistory && _editingPriceHistory.length > 0) {
+    // En modo edición: usar lo que el usuario tiene en el editor visual
+    historialPrecios = [..._editingPriceHistory].sort((a, b) => a.desde.localeCompare(b.desde));
+    // Si además cambió el precio principal (fPrecio) y no coincide con la última entrada,
+    // agregar entrada para hoy automáticamente
+    const today = new Date().toISOString().split('T')[0];
+    const lastH = historialPrecios[historialPrecios.length - 1];
+    if (originalClient && originalClient.precio !== precio && lastH.precio !== precio) {
+      if (!historialPrecios.find(h => h.desde === today)) {
+        historialPrecios.push({ desde: today, precio: precio });
+      }
+    }
+  } else {
+    // Fallback: calcular automáticamente si el precio cambió
+    const today = new Date().toISOString().split('T')[0];
+    if (originalClient && originalClient.precio !== precio) {
+      const desdeOriginal = originalClient.fechaInicio || '2020-01-01';
+      historialPrecios = [
+        { desde: desdeOriginal, precio: originalClient.precio || 0 },
+        { desde: today, precio: precio }
+      ];
+    } else {
+      historialPrecios = originalClient?.historial_precios
+        || [{ desde: originalClient?.fechaInicio || '2020-01-01', precio: precio }];
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   const clientData = {
     id: editingId || generateId(nombre),
     nombre: fullName,
@@ -4298,7 +4446,8 @@ function saveClient() {
     colorLight: colorLight,
     mapUrl: buildMapUrl(direccion, ciudad),
     activo: activo,
-    fechaInicio: newFechaInicio
+    fechaInicio: newFechaInicio,
+    historial_precios: historialPrecios
   };
   
   if (editingId) {
@@ -4781,7 +4930,8 @@ function getClientHistory(clientId) {
       if (typeof val === 'object' && val.precio !== undefined) {
         precio = val.precio;
       } else if (val === true) {
-        precio = client.precio || 0;
+        // Legacy record: use the price that was effective on that date
+        precio = getPrecioEnFecha(client, dateStr);
       }
       if (isCancelled) precio = 0;
       
