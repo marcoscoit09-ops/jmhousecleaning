@@ -2377,7 +2377,10 @@ body{
   <div class="clients-section">
     <div class="section-title-row" style="margin-top:40px">
       <h2 class="section-title">Nuestros <em>Clientes</em></h2>
-      <button class="add-client-top-btn" onclick="openAdmin(); setTimeout(showAddForm, 300)">＋ Nuevo Cliente</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="add-client-top-btn" onclick="exportarClientesJSON()" style="background:var(--off);color:var(--black);border:1px solid rgba(0,0,0,0.12)">↓ Exportar JSON</button>
+        <button class="add-client-top-btn" onclick="openAdmin(); setTimeout(showAddForm, 300)">＋ Nuevo Cliente</button>
+      </div>
     </div>
     <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; align-items: center;">
       <div class="client-search-wrap" style="flex: 1; min-width: 200px; margin-bottom: 0;">
@@ -6633,6 +6636,34 @@ function init() {
 }
 
 init();
+
+function exportarClientesJSON() {
+  const today = new Date().toISOString().slice(0, 10);
+  const clientes = CLIENTS.map(c => {
+    const precio = getPrecioEnFecha(c, today);
+    const fuenteMap = { nuestro: 'propio', app: 'helpling' };
+    return {
+      nombre: c.nombre,
+      dia: c.diaNombre || c.dia,
+      horas: c.duracion,
+      pago_por_sesion: precio,
+      frecuencia: c.frecuencia || 'semanal',
+      fuente: fuenteMap[c.origen] || c.origen || 'propio',
+      activo: c.activo !== false
+    };
+  });
+  const json = JSON.stringify({ clientes }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `jm_clientes_${today}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 Clientes exportados como JSON', 'success');
+}
 </script>
 </body>
 </html>
