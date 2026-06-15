@@ -1282,6 +1282,56 @@ body{
   border-color:var(--danger);
   color:var(--white);
 }
+.apt-card.moved{
+  opacity:0.55;
+  border-left-color:var(--warning) !important;
+}
+.apt-card.moved .apt-name{
+  color:var(--warning);
+}
+.apt-card.moved .apt-time{
+  color:var(--warning) !important;
+}
+.apt-card.moved .apt-dot{
+  background:var(--warning) !important;
+}
+.apt-move-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-size:10px;
+  font-weight:600;
+  color:var(--warning);
+  background:rgba(255,149,0,0.10);
+  padding:2px 8px;
+  border-radius:6px;
+  margin-top:3px;
+}
+.apt-checkbox.move-btn{
+  width:28px;height:28px;
+  border-radius:50%;
+  border:2.5px solid var(--light);
+  background:var(--white);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  color:var(--mid);
+  transition:all 0.2s;
+  flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.apt-checkbox.move-btn:hover{
+  border-color:var(--warning);
+  color:var(--warning);
+  transform:scale(1.1);
+}
+.apt-checkbox.move-btn.moved{
+  background:var(--warning);
+  border-color:var(--warning);
+  color:var(--white);
+}
 .apt-price{
   font-size:11px;
   font-weight:600;
@@ -2344,7 +2394,7 @@ body{
 
   <!-- WORK TRACKER -->
   <div class="work-tracker" id="workTracker">
-    <div class="work-tracker-title">🕐 Días y Horas Trabajadas <em style="font-style:normal;color:var(--mid);font-weight:400;font-size:12px">— Mes actual</em></div>
+    <div class="work-tracker-title">🕐 Días y Horas Trabajadas <em id="workTrackerMonthLabel" style="font-style:normal;color:var(--mid);font-weight:400;font-size:12px"></em></div>
     <div class="work-tracker-grid" id="workTrackerGrid"></div>
   </div>
 
@@ -3030,8 +3080,8 @@ function toggleCompletion(clientId, dateStr, event) {
   const key = `${clientId}_${dateStr}`;
   const existing = COMPLETED[key];
 
-  if (existing && typeof existing === 'object' && existing.cancelled) {
-    // Si está cancelada: descancelar directamente
+  if (existing && typeof existing === 'object' && (existing.cancelled || existing.moved)) {
+    // Si está cancelada o movida: limpiar el estado directamente
     delete COMPLETED[key];
     saveCompleted(COMPLETED);
     renderWeekGrid();
@@ -3150,7 +3200,7 @@ function toggleCancellation(clientId, dateStr, event) {
     // Uncancel
     delete COMPLETED[key];
   } else {
-    // Cancel (remove completion if exists, mark as cancelled)
+    // Cancel (remove completion or moved state, mark as cancelled)
     COMPLETED[key] = { cancelled: true, precio: 0, timestamp_cancelado: new Date().toISOString() };
   }
   saveCompleted(COMPLETED);
@@ -3159,6 +3209,70 @@ function toggleCancellation(clientId, dateStr, event) {
   renderWorkTracker();
   updateStats();
   updateEarnings();
+}
+
+function mostrarModalMoverCita(clientId, dateStr) {
+  const client = CLIENTS.find(c => c.id === clientId);
+  const nombre = client ? client.nombre.split(' ')[0] : clientId;
+  const key = `${clientId}_${dateStr}`;
+  const compData = COMPLETED[key];
+  const fechaActual = compData && compData.moved ? compData.nueva_fecha : '';
+
+  document.getElementById('modalTitle').innerHTML = `↗ Mover cita · ${nombre}`;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="padding:8px 0 4px;color:var(--mid);font-size:13px;">
+      Fecha original: <strong>${dateStr}</strong>
+    </div>
+    <div style="margin-top:16px;">
+      <label style="font-size:12px;font-weight:600;color:var(--mid);display:block;margin-bottom:6px;">Nueva fecha</label>
+      <input type="date" id="moverCitaFecha" value="${fechaActual}" min="${dateStr}"
+        style="width:100%;padding:12px;border:1.5px solid var(--light);border-radius:8px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;"
+        oninput="this.style.borderColor='var(--warning)'">
+    </div>
+  `;
+  document.getElementById('modalActions').innerHTML = `
+    <button class="modal-btn secondary" onclick="closeModalForce()">Cancelar</button>
+    <button class="modal-btn primary" style="background:var(--warning);border-color:var(--warning);"
+      onclick="confirmarMoverCita('${clientId}','${dateStr}')">↗ Confirmar</button>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function confirmarMoverCita(clientId, dateStr) {
+  const nuevaFecha = document.getElementById('moverCitaFecha').value;
+  if (!nuevaFecha || nuevaFecha === dateStr) {
+    showToast('Elige una fecha diferente a la original', 'error');
+    return;
+  }
+  closeModalForce();
+  const key = `${clientId}_${dateStr}`;
+  COMPLETED[key] = { moved: true, nueva_fecha: nuevaFecha, timestamp_movida: new Date().toISOString() };
+  saveCompleted(COMPLETED);
+  renderWeekGrid();
+  if (calendarView === 'mensual') renderMonthGrid();
+  renderWorkTracker();
+  updateStats();
+  updateEarnings();
+  const d = nuevaFecha.split('-');
+  showToast(`↗ Cita movida al ${d[2]}/${d[1]}/${d[0]}`, 'success');
+}
+
+function toggleMove(clientId, dateStr, event) {
+  if (event) event.stopPropagation();
+  const key = `${clientId}_${dateStr}`;
+  const existing = COMPLETED[key];
+  if (existing && typeof existing === 'object' && existing.moved) {
+    // Un-move
+    delete COMPLETED[key];
+    saveCompleted(COMPLETED);
+    renderWeekGrid();
+    if (calendarView === 'mensual') renderMonthGrid();
+    renderWorkTracker();
+    updateStats();
+    updateEarnings();
+  } else {
+    mostrarModalMoverCita(clientId, dateStr);
+  }
 }
 
 // Returns the price that was in effect for a client on a given date
@@ -3444,13 +3558,14 @@ function updateStats() {
         const compKey = `${c.id}_${dateStr}`;
         const compData = COMPLETED[compKey];
         const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
-        const isDone = !!compData && !isCancelled;
-        
+        const isMoved = !!(compData && typeof compData === 'object' && compData.moved);
+        const isDone = !!compData && !isCancelled && !isMoved;
+
         if (isDone) {
           horasCompletadas += c.duracion || 0;
           totalIncomeThisWeek += getCompletedPrice(compKey, c);
-        } else if (!isCancelled) {
-          // If not done and not cancelled, it's pending
+        } else if (!isCancelled && !isMoved) {
+          // If not done, not cancelled, and not moved, it's pending
           citasPendientes++;
         }
       }
@@ -3644,35 +3759,44 @@ function renderWeekGrid() {
         const compKey = `${client.id}_${dateStr}`;
         const compData = COMPLETED[compKey];
         const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
-        const isDone = !!compData && !isCancelled;
+        const isMoved = !!(compData && typeof compData === 'object' && compData.moved);
+        const isDone = !!compData && !isCancelled && !isMoved;
         const precio = client.precio || 0;
         const earnedPrice = isDone ? getCompletedPrice(compKey, client) : 0;
         const isApp = (client.origen || 'nuestro') === 'app';
         const phoneClean = (client.telefono || '').replace(/[^+\d]/g, '');
         const hasNotes = client.acceso || client.notas;
         const photos = (typeof compData === 'object' && compData.fotos) ? compData.fotos : [];
+        const cardColor = isCancelled ? 'var(--danger)' : isMoved ? 'var(--warning)' : client.color;
+        let moveBadgeHtml = '';
+        if (isMoved && compData.nueva_fecha) {
+          const nd = compData.nueva_fecha.split('-');
+          moveBadgeHtml = `<div class="apt-move-badge">↗ Movida al ${nd[2]}/${nd[1]}</div>`;
+        }
         html += `
-          <div class="apt-card${isDone ? ' completed' : ''}${isCancelled ? ' cancelled' : ''}${isApp ? ' from-app' : ''}" style="border-left-color:${isCancelled ? 'var(--danger)' : client.color}" onclick="openClientModal('${client.id}')">
+          <div class="apt-card${isDone ? ' completed' : ''}${isCancelled ? ' cancelled' : ''}${isMoved ? ' moved' : ''}${isApp ? ' from-app' : ''}" style="border-left-color:${cardColor}" onclick="openClientModal('${client.id}')">
             <div class="apt-card-inner">
               <div class="apt-card-content">
-                <div class="apt-time" style="color:${isCancelled ? 'var(--danger)' : client.color}">
-                  <span class="apt-dot" style="background:${isCancelled ? 'var(--danger)' : client.color}"></span>
+                <div class="apt-time" style="color:${cardColor}">
+                  <span class="apt-dot" style="background:${cardColor}"></span>
                   ${client.horaInicio || ''} - ${client.horaFin || ''}
                 </div>
                 <div class="apt-name">${(client.nombre || '').split(' ')[0]}${isApp ? ' <span class="origin-badge app" style="font-size:8px;padding:1px 5px;vertical-align:middle">APP</span>' : ''}${hasNotes ? ' <span class="apt-notes-indicator" title="Tiene notas">📋</span>' : ''}</div>
-                <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && precio > 0 ? ` · €${precio}` : ''}</div>
+                <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && !isMoved && precio > 0 ? ` · €${precio}` : ''}</div>
                 ${isCancelled ? '<div class="apt-cancel-badge">✕ Cancelada</div>' : ''}
+                ${moveBadgeHtml}
                 ${isDone ? `<div class="apt-earned">
                   <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="Cambiar método de pago" onclick="event.stopPropagation();cambiarMetodoPago('${client.id}','${dateStr}')">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
                 </div>
                 <label class="photo-upload-btn" onclick="event.stopPropagation();triggerPhotoUpload('${client.id}','${dateStr}',event)">📷 ${photos.length > 0 ? photos.length + ' foto' + (photos.length !== 1 ? 's' : '') : 'Agregar foto'}</label>` : ''}
-                ${phoneClean && !isCancelled ? `<div class="apt-contact-row">
+                ${phoneClean && !isCancelled && !isMoved ? `<div class="apt-contact-row">
                   <a href="https://wa.me/${phoneClean.replace('+','')}" target="_blank" class="contact-btn whatsapp" onclick="event.stopPropagation()">💬 WA</a>
                   <a href="sms:${phoneClean}" class="contact-btn sms" onclick="event.stopPropagation()">✉️ SMS</a>
                 </div>` : ''}
               </div>
               <div class="apt-check" style="display:flex;flex-direction:column;gap:4px;align-items:center">
                 <div class="apt-checkbox${isDone ? ' checked' : ''}" onclick="toggleCompletion('${client.id}','${dateStr}',event)" title="Completar">${isDone ? '✓' : ''}</div>
+                <div class="apt-checkbox move-btn${isMoved ? ' moved' : ''}" onclick="toggleMove('${client.id}','${dateStr}',event)" title="Mover cita">↗</div>
                 <div class="apt-checkbox cancel-btn${isCancelled ? ' cancelled' : ''}" onclick="toggleCancellation('${client.id}','${dateStr}',event)" title="Cancelar cita">${isCancelled ? '✕' : '✕'}</div>
               </div>
             </div>
@@ -4367,7 +4491,7 @@ function saveClient() {
       for (const key in COMPLETED) {
         if (key.startsWith(clientPrefix)) {
           const compData = COMPLETED[key];
-          if (compData && typeof compData === 'object' && !compData.cancelled) {
+          if (compData && typeof compData === 'object' && !compData.cancelled && !compData.moved) {
             const dateStr = key.substring(clientPrefix.length);
             if (!maxDate || dateStr > maxDate) {
               maxDate = dateStr;
@@ -4551,6 +4675,7 @@ function changeWeek(direction) {
   currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
   renderWeekGrid();
   updateStats();
+  renderWorkTracker();
 }
 function goToToday() {
   currentWeekStart = getMonday(new Date());
@@ -4585,20 +4710,24 @@ function renderTodayDashboard() {
       const compKey = `${client.id}_${dateStr}`;
       const compData = COMPLETED[compKey];
       const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
-      const isDone = !!compData && !isCancelled;
-      
+      const isMoved = !!(compData && typeof compData === 'object' && compData.moved);
+      const isDone = !!compData && !isCancelled && !isMoved;
+
       // Determine if this is the next upcoming appointment
       const [sh,sm] = (client.horaInicio || '00:00').split(':').map(Number);
       const [eh,em] = (client.horaFin || '00:00').split(':').map(Number);
       const startMin = sh*60+sm;
       const endMin = eh*60+em;
       const nowMin = now.getHours()*60+now.getMinutes();
-      const isNext = !isDone && !isCancelled && nowMin < startMin;
-      const isActive = !isDone && !isCancelled && nowMin >= startMin && nowMin < endMin;
-      
+      const isNext = !isDone && !isCancelled && !isMoved && nowMin < startMin;
+      const isActive = !isDone && !isCancelled && !isMoved && nowMin >= startMin && nowMin < endMin;
+
       let countdown = '';
       if (isCancelled) {
         countdown = '🚫 Cancelada';
+      } else if (isMoved) {
+        const nd = compData.nueva_fecha ? compData.nueva_fecha.split('-') : null;
+        countdown = nd ? `↗ Movida al ${nd[2]}/${nd[1]}` : '↗ Movida';
       } else if (isNext) {
         const diff = startMin - nowMin;
         const h = Math.floor(diff/60);
@@ -4612,7 +4741,7 @@ function renderTodayDashboard() {
         countdown = 'Finalizada';
       }
       
-      html += `<div class="today-card ${isNext ? 'is-next' : ''}" style="border-left-color:${isCancelled ? 'var(--danger)' : client.color}${isDone || isCancelled ? ';opacity:0.5':''}" onclick="openClientModal('${client.id}')">
+      html += `<div class="today-card ${isNext ? 'is-next' : ''}" style="border-left-color:${isCancelled ? 'var(--danger)' : isMoved ? 'var(--warning)' : client.color}${isDone || isCancelled || isMoved ? ';opacity:0.5':''}" onclick="openClientModal('${client.id}')">
         <div class="today-card-time">${client.horaInicio || ''}</div>
         <div>
           <div class="today-card-name">${client.nombre || ''}</div>
@@ -4669,6 +4798,8 @@ function renderTodayDashboard() {
     
     if (val && typeof val === 'object' && val.cancelled) {
       clientStats[cId].cancellations++;
+    } else if (val && typeof val === 'object' && val.moved) {
+      // moved appointments don't count as completions or cancellations in stats
     } else {
       const price = getCompletedPrice(key, client);
       clientStats[cId].completions++;
@@ -4930,7 +5061,8 @@ function getClientHistory(clientId) {
     if (cId === clientId || cId === baseName || cId === altId1 || cId === baseId || cId === client.nombre.toLowerCase()) {
       const val = COMPLETED[key];
       const isCancelled = typeof val === 'object' && val.cancelled;
-      
+      const isMoved = typeof val === 'object' && val.moved;
+
       let precio = 0;
       if (typeof val === 'object' && val.precio !== undefined) {
         precio = val.precio;
@@ -4938,12 +5070,13 @@ function getClientHistory(clientId) {
         // Legacy record: use the price that was effective on that date
         precio = getPrecioEnFecha(client, dateStr);
       }
-      if (isCancelled) precio = 0;
-      
+      if (isCancelled || isMoved) precio = 0;
+
       const fotos = typeof val === 'object' ? (val.fotos || []) : [];
-      
+      const nueva_fecha = isMoved && val.nueva_fecha ? val.nueva_fecha : null;
+
       if (!history.find(h => h.dateStr === dateStr)) {
-        history.push({ dateStr, precio, fotos, cancelled: isCancelled });
+        history.push({ dateStr, precio, fotos, cancelled: isCancelled, moved: isMoved, nueva_fecha });
       }
     }
   });
@@ -4953,7 +5086,7 @@ function getClientHistory(clientId) {
 
 function renderClientHistory(clientId) {
   const history = getClientHistory(clientId);
-  const activeHistory = history.filter(h => !h.cancelled);
+  const activeHistory = history.filter(h => !h.cancelled && !h.moved);
   const total = history.reduce((s,h) => s + h.precio, 0);
   
   let html = `<div class="history-summary">
@@ -4970,15 +5103,21 @@ function renderClientHistory(clientId) {
       const [y,m,d] = h.dateStr.split('-').map(Number);
       const dateObj = new Date(y, m-1, d);
       const dayName = DIAS_SEMANA[dateObj.getDay()];
-      html += `<div class="history-item${h.cancelled ? ' cancelled' : ''}"${h.cancelled ? ' style="opacity:0.6"' : ''}>
+      let moveBadge = '';
+      if (h.moved && h.nueva_fecha) {
+        const [ny,nm,nd2] = h.nueva_fecha.split('-').map(Number);
+        moveBadge = `<span style="color:var(--warning);font-size:11px;font-weight:600;margin-left:6px">(Movida al ${nd2}/${nm}/${ny})</span>`;
+      }
+      html += `<div class="history-item${h.cancelled ? ' cancelled' : ''}"${h.cancelled || h.moved ? ' style="opacity:0.6"' : ''}>
         <div>
           <span class="history-date" ${h.cancelled ? 'style="text-decoration:line-through"' : ''}>${dayName}, ${d} de ${MESES[m-1]} ${y}</span>
           ${h.cancelled ? '<span style="color:var(--danger);font-size:11px;font-weight:600;margin-left:6px">(Cancelada)</span>' : ''}
+          ${moveBadge}
           ${h.fotos.length > 0 ? `<div class="history-photos">${h.fotos.map(f => `<img class="history-photo-thumb" src="${f.data}" onclick="event.stopPropagation();openPhotoViewer('${f.data.substring(0,50)}...')" title="${f.tipo}">`).join('')}</div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="history-price" ${h.cancelled ? 'style="color:var(--mid)"' : ''}>\u20ac${parseFloat(h.precio.toFixed(2))}</span>
-          ${!h.cancelled ? `<button class="admin-icon-btn" onclick="event.stopPropagation();generateInvoice('${clientId}','${h.dateStr}')" title="Generar recibo" style="font-size:11px">\ud83d\udcc4</button>` : ''}
+          <span class="history-price" ${h.cancelled || h.moved ? 'style="color:var(--mid)"' : ''}>\u20ac${parseFloat(h.precio.toFixed(2))}</span>
+          ${!h.cancelled && !h.moved ? `<button class="admin-icon-btn" onclick="event.stopPropagation();generateInvoice('${clientId}','${h.dateStr}')" title="Generar recibo" style="font-size:11px">\ud83d\udcc4</button>` : ''}
         </div>
       </div>`;
     });
@@ -5713,11 +5852,13 @@ function setCalendarView(view) {
     currentMonthView = new Date(currentWeekStart);
     renderMonthGrid();
   }
+  renderWorkTracker();
 }
 
 function changeMonth(dir) {
   currentMonthView.setMonth(currentMonthView.getMonth() + dir);
   renderMonthGrid();
+  renderWorkTracker();
 }
 
 function goToCurrentMonth() {
@@ -5801,9 +5942,12 @@ function renderMonthGrid() {
 // ===== WORK TRACKER =====
 function renderWorkTracker() {
   const grid = document.getElementById('workTrackerGrid');
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const ref = calendarView === 'mensual' ? currentMonthView : currentWeekStart;
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  const isCurrentMonth = (() => { const n = new Date(); return n.getFullYear() === year && n.getMonth() === month; })();
+  const label = document.getElementById('workTrackerMonthLabel');
+  if (label) label.textContent = isCurrentMonth ? '— Mes actual' : `— ${MESES[month]} ${year}`;
   
   let daysWorked = 0;
   let hoursWorked = 0;
@@ -5819,10 +5963,9 @@ function renderWorkTracker() {
     if (cy === year && cm === month + 1) {
       const val = COMPLETED[key];
       const isCancelled = val && typeof val === 'object' && val.cancelled;
-      if (isCancelled) {
-        cancelledThisMonth++;
-        return;
-      }
+      const isMoved = val && typeof val === 'object' && val.moved;
+      if (isCancelled) { cancelledThisMonth++; return; }
+      if (isMoved) return;
       const clientId = parts.slice(0, -1).join('_');
       const client = CLIENTS.find(c => c.id === clientId);
       if (!client) return;
@@ -6639,9 +6782,10 @@ init();
 
 function exportarClientesJSON() {
   const today = new Date().toISOString().slice(0, 10);
+  const fuenteMap = { nuestro: 'propio', app: 'helpling' };
+
   const clientes = CLIENTS.map(c => {
     const precio = getPrecioEnFecha(c, today);
-    const fuenteMap = { nuestro: 'propio', app: 'helpling' };
     return {
       nombre: c.nombre,
       dia: c.diaNombre || c.dia,
@@ -6652,7 +6796,30 @@ function exportarClientesJSON() {
       activo: c.activo !== false
     };
   });
-  const json = JSON.stringify({ clientes }, null, 2);
+
+  const clientMap = {};
+  CLIENTS.forEach(c => { clientMap[c.id] = c.nombre; });
+
+  // fecha is always the last 10 chars (YYYY-MM-DD), clientId is everything before the last "_YYYY-MM-DD"
+  const citas = Object.entries(COMPLETED)
+    .map(([key, val]) => {
+      const fecha = key.slice(-10);
+      const clientId = key.slice(0, -11);
+      const isCancelled = typeof val === 'object' && val !== null && val.cancelled;
+      const isMoved = typeof val === 'object' && val !== null && val.moved;
+      const precio = typeof val === 'object' && val !== null ? (val.precio || 0) : 0;
+      const entry = {
+        cliente: clientMap[clientId] || clientId,
+        fecha,
+        estado: isCancelled ? 'cancelada' : isMoved ? 'movida' : 'completada',
+        precio: (isCancelled || isMoved) ? 0 : precio
+      };
+      if (isMoved && val.nueva_fecha) entry.nueva_fecha = val.nueva_fecha;
+      return entry;
+    })
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  const json = JSON.stringify({ clientes, citas }, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
