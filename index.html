@@ -3489,16 +3489,16 @@ function getISOWeek(d) {
 // Returns list of {client, originalDateStr} for clients whose appointment was moved TO dateStr
 function getMovedToClients(dateStr) {
   const result = [];
-  const seen = new Set();
-  Object.keys(COMPLETED).forEach(key => {
-    const val = COMPLETED[key];
-    if (!val || typeof val !== 'object' || !val.moved || val.nueva_fecha !== dateStr) return;
-    // key format: clientId_YYYY-MM-DD (date is always 10 chars)
-    const originalDateStr = key.slice(-10);
-    const cId = key.slice(0, key.length - 11);
-    if (seen.has(cId)) return;
-    const client = CLIENTS.find(c => c.id === cId);
-    if (client) { seen.add(cId); result.push({ client, originalDateStr }); }
+  const prefix = client => client.id + '_';
+  CLIENTS.forEach(client => {
+    Object.keys(COMPLETED).forEach(key => {
+      if (!key.startsWith(prefix(client))) return;
+      const val = COMPLETED[key];
+      if (!val || typeof val !== 'object' || !val.moved || val.nueva_fecha !== dateStr) return;
+      if (result.find(r => r.client.id === client.id)) return;
+      const originalDateStr = key.slice(client.id.length + 1);
+      result.push({ client, originalDateStr });
+    });
   });
   return result;
 }
