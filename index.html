@@ -1295,6 +1295,18 @@ body{
 .apt-card.moved .apt-dot{
   background:var(--warning) !important;
 }
+.apt-moved-here-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-size:10px;
+  font-weight:600;
+  color:#34c759;
+  background:rgba(52,199,89,0.10);
+  padding:2px 8px;
+  border-radius:6px;
+  margin-top:3px;
+}
 .apt-move-badge{
   display:inline-flex;
   align-items:center;
@@ -3474,6 +3486,23 @@ function getISOWeek(d) {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+// Returns list of {client, originalDateStr} for clients whose appointment was moved TO dateStr
+function getMovedToClients(dateStr) {
+  const result = [];
+  const seen = new Set();
+  Object.keys(COMPLETED).forEach(key => {
+    const val = COMPLETED[key];
+    if (!val || typeof val !== 'object' || !val.moved || val.nueva_fecha !== dateStr) return;
+    // key format: clientId_YYYY-MM-DD (date is always 10 chars)
+    const originalDateStr = key.slice(-10);
+    const cId = key.slice(0, key.length - 11);
+    if (seen.has(cId)) return;
+    const client = CLIENTS.find(c => c.id === cId);
+    if (client) { seen.add(cId); result.push({ client, originalDateStr }); }
+  });
+  return result;
+}
+
 // Check if a client should appear on a specific date based on frequency
 function clientAppliesToDate(client, date) {
   const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -3742,7 +3771,9 @@ function renderWeekGrid() {
     const isToday = dayDate.getTime() === today.getTime();
     const isPast = dayDate < today;
     const dayClients = CLIENTS.filter(c => clientAppliesToDate(c, dayDate));
-    
+    const dateStrDay = `${dayDate.getFullYear()}-${String(dayDate.getMonth()+1).padStart(2,'0')}-${String(dayDate.getDate()).padStart(2,'0')}`;
+    const movedHereEntries = getMovedToClients(dateStrDay).filter(({ client }) => !dayClients.find(c => c.id === client.id));
+
     let classes = 'day-column animate-in';
     if (isToday) classes += ' today';
     else if (isPast) classes += ' past';
@@ -3753,9 +3784,9 @@ function renderWeekGrid() {
     html += `<div class="day-number">${dayDate.getDate()}</div>`;
     html += `</div><div class="day-body">`;
     
-    if (dayClients.length > 0) {
+    if (dayClients.length > 0 || movedHereEntries.length > 0) {
       dayClients.forEach(client => {
-        const dateStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth()+1).padStart(2,'0')}-${String(dayDate.getDate()).padStart(2,'0')}`;
+        const dateStr = dateStrDay;
         const compKey = `${client.id}_${dateStr}`;
         const compData = COMPLETED[compKey];
         const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
@@ -3784,6 +3815,59 @@ function renderWeekGrid() {
                 <div class="apt-name">${(client.nombre || '').split(' ')[0]}${isApp ? ' <span class="origin-badge app" style="font-size:8px;padding:1px 5px;vertical-align:middle">APP</span>' : ''}${hasNotes ? ' <span class="apt-notes-indicator" title="Tiene notas">📋</span>' : ''}</div>
                 <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && !isMoved && precio > 0 ? ` · €${precio}` : ''}</div>
                 ${isCancelled ? '<div class="apt-cancel-badge">✕ Cancelada</div>' : ''}
+                ${moveBadgeHtml}
+                ${isDone ? `<div class="apt-earned">
+                  <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="Cambiar método de pago" onclick="event.stopPropagation();cambiarMetodoPago('${client.id}','${dateStr}')">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
+                </div>
+                <label class="photo-upload-btn" onclick="event.stopPropagation();triggerPhotoUpload('${client.id}','${dateStr}',event)">📷 ${photos.length > 0 ? photos.length + ' foto' + (photos.length !== 1 ? 's' : '') : 'Agregar foto'}</label>` : ''}
+                ${phoneClean && !isCancelled && !isMoved ? `<div class="apt-contact-row">
+                  <a href="https://wa.me/${phoneClean.replace('+','')}" target="_blank" class="contact-btn whatsapp" onclick="event.stopPropagation()">💬 WA</a>
+                  <a href="sms:${phoneClean}" class="contact-btn sms" onclick="event.stopPropagation()">✉️ SMS</a>
+                </div>` : ''}
+              </div>
+              <div class="apt-check" style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                <div class="apt-checkbox${isDone ? ' checked' : ''}" onclick="toggleCompletion('${client.id}','${dateStr}',event)" title="Completar">${isDone ? '✓' : ''}</div>
+                <div class="apt-checkbox move-btn${isMoved ? ' moved' : ''}" onclick="toggleMove('${client.id}','${dateStr}',event)" title="Mover cita">↗</div>
+                <div class="apt-checkbox cancel-btn${isCancelled ? ' cancelled' : ''}" onclick="toggleCancellation('${client.id}','${dateStr}',event)" title="Cancelar cita">${isCancelled ? '✕' : '✕'}</div>
+              </div>
+            </div>
+          </div>`;
+      });
+      // Render appointments that were moved TO this day
+      movedHereEntries.forEach(({ client, originalDateStr }) => {
+        const dateStr = dateStrDay;
+        const compKey = `${client.id}_${dateStr}`;
+        const compData = COMPLETED[compKey];
+        const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
+        const isMoved = !!(compData && typeof compData === 'object' && compData.moved);
+        const isDone = !!compData && !isCancelled && !isMoved;
+        const precio = client.precio || 0;
+        const earnedPrice = isDone ? getCompletedPrice(compKey, client) : 0;
+        const isApp = (client.origen || 'nuestro') === 'app';
+        const phoneClean = (client.telefono || '').replace(/[^+\d]/g, '');
+        const hasNotes = client.acceso || client.notas;
+        const photos = (typeof compData === 'object' && compData.fotos) ? compData.fotos : [];
+        const cardColor = isCancelled ? 'var(--danger)' : isMoved ? 'var(--warning)' : client.color;
+        const od = originalDateStr.split('-');
+        const movedHereBadge = !isDone && !isCancelled && !isMoved
+          ? `<div class="apt-moved-here-badge">↩ Reagendada desde ${od[2]}/${od[1]}</div>` : '';
+        let moveBadgeHtml = '';
+        if (isMoved && compData && compData.nueva_fecha) {
+          const nd = compData.nueva_fecha.split('-');
+          moveBadgeHtml = `<div class="apt-move-badge">↗ Movida al ${nd[2]}/${nd[1]}</div>`;
+        }
+        html += `
+          <div class="apt-card${isDone ? ' completed' : ''}${isCancelled ? ' cancelled' : ''}${isMoved ? ' moved' : ''}${isApp ? ' from-app' : ''}" style="border-left-color:${cardColor}" onclick="openClientModal('${client.id}')">
+            <div class="apt-card-inner">
+              <div class="apt-card-content">
+                <div class="apt-time" style="color:${cardColor}">
+                  <span class="apt-dot" style="background:${cardColor}"></span>
+                  ${client.horaInicio || ''} - ${client.horaFin || ''}
+                </div>
+                <div class="apt-name">${(client.nombre || '').split(' ')[0]}${isApp ? ' <span class="origin-badge app" style="font-size:8px;padding:1px 5px;vertical-align:middle">APP</span>' : ''}${hasNotes ? ' <span class="apt-notes-indicator" title="Tiene notas">📋</span>' : ''}</div>
+                <div class="apt-duration">${client.duracionTexto}${!isDone && !isCancelled && !isMoved && precio > 0 ? ` · €${precio}` : ''}</div>
+                ${isCancelled ? '<div class="apt-cancel-badge">✕ Cancelada</div>' : ''}
+                ${movedHereBadge}
                 ${moveBadgeHtml}
                 ${isDone ? `<div class="apt-earned">
                   <span class="apt-earned-amount" onclick="editCompletionPrice('${client.id}','${dateStr}',event)" title="Clic para editar">€${parseFloat(earnedPrice.toFixed(2))}</span>${compData && compData.metodo_pago ? `<span class="apt-metodo-badge" title="Cambiar método de pago" onclick="event.stopPropagation();cambiarMetodoPago('${client.id}','${dateStr}')">${compData.metodo_pago === 'efectivo' ? '💵' : compData.metodo_pago === 'transferencia' ? '🏦' : '📱'}</span>` : ''}
