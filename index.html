@@ -3662,12 +3662,18 @@ function updateEarnings() {
     }
   } else {
     // Monthly: sum all completed in the VIEWED month
-    // Usamos el viernes (+4) en vez del miércoles (+3) para que semanas que
-    // cruzan el inicio de mes (ej: lun 27/4 — vie 1/5) se contabilicen en el mes nuevo
-    const viewedDate = new Date(currentWeekStart);
-    viewedDate.setDate(viewedDate.getDate() + 4); // Viernes de la semana → mes correcto
-    const year = viewedDate.getFullYear();
-    const month = viewedDate.getMonth();
+    let year, month;
+    if (calendarView === 'mensual') {
+      year = currentMonthView.getFullYear();
+      month = currentMonthView.getMonth();
+    } else {
+      // Usamos el viernes (+4) para que semanas que cruzan el inicio de mes
+      // se contabilicen en el mes nuevo
+      const viewedDate = new Date(currentWeekStart);
+      viewedDate.setDate(viewedDate.getDate() + 4);
+      year = viewedDate.getFullYear();
+      month = viewedDate.getMonth();
+    }
     
     // --- AUDIT LOG PARA VERIFICAR CADA CENTAVO ---
     const auditLog = [];
@@ -5981,11 +5987,13 @@ function changeMonth(dir) {
   currentMonthView.setMonth(currentMonthView.getMonth() + dir);
   renderMonthGrid();
   renderWorkTracker();
+  updateEarnings();
 }
 
 function goToCurrentMonth() {
   currentMonthView = new Date();
   renderMonthGrid();
+  updateEarnings();
 }
 
 function renderMonthGrid() {
