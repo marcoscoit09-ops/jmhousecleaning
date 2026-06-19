@@ -3204,6 +3204,17 @@ function completarLimpieza(clientId, dateStr, precio, metodo) {
   updateEarnings();
 }
 
+function toggleLiquidezDetalle(listId, cardId) {
+  const list = document.getElementById(listId);
+  const card = document.getElementById(cardId);
+  if (!list) return;
+  const open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+  const arrow = card.querySelector('div[style*="Ver detalle"]');
+  if (arrow) arrow.textContent = open ? '▼ Ver detalle' : '▲ Ocultar';
+  card.style.boxShadow = open ? '' : '0 2px 12px rgba(0,0,0,0.10)';
+}
+
 function toggleCancellation(clientId, dateStr, event) {
   if (event) event.stopPropagation();
   const key = `${clientId}_${dateStr}`;
@@ -3732,14 +3743,39 @@ function updateEarnings() {
         if (porMetodo.sin_especificar > 0) {
           metodoItems.push({ emoji: '❓', label: 'Sin especificar', key: 'sin_especificar', color: '#8e8e93', desc: 'Sin método registrado' });
         }
+        // Build per-method client breakdown
+        const clientesPorMetodo = { efectivo: {}, transferencia: {}, helpling: {}, sin_especificar: {} };
+        auditLog.forEach(log => {
+          const mk = log.MetodoPago === 'efectivo' ? 'efectivo'
+            : log.MetodoPago === 'transferencia' ? 'transferencia'
+            : log.MetodoPago === 'helpling' ? 'helpling' : 'sin_especificar';
+          const name = log.Nombre.split(' - ')[0];
+          if (!clientesPorMetodo[mk][name]) clientesPorMetodo[mk][name] = 0;
+          clientesPorMetodo[mk][name] += log.Monto;
+        });
+
         liquidezList.innerHTML = metodoItems.map(item => {
           const val = porMetodo[item.key];
           if (val === 0) return '';
-          return `<div style="background:white;padding:10px 16px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);display:flex;flex-direction:column;gap:2px;min-width:140px;">
+          const clientes = clientesPorMetodo[item.key];
+          const clientRows = Object.keys(clientes).sort((a,b) => clientes[b]-clientes[a]).map(name =>
+            `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+              <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%">${name}</span>
+              <span style="font-size:12px;font-weight:700;color:${item.color};flex-shrink:0">€${clientes[name].toFixed(2)}</span>
+            </div>`
+          ).join('');
+          const cardId = `liq-card-${item.key}`;
+          const listId = `liq-list-${item.key}`;
+          return `<div id="${cardId}" onclick="toggleLiquidezDetalle('${listId}','${cardId}')"
+            style="background:white;padding:10px 16px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);display:flex;flex-direction:column;gap:2px;min-width:140px;cursor:pointer;transition:box-shadow 0.15s;">
             <div style="font-size:18px;line-height:1.2">${item.emoji}</div>
             <div style="font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">${item.label}</div>
             <div style="font-size:18px;font-weight:800;color:${item.color}">€${val.toFixed(2)}</div>
             <div style="font-size:10px;color:var(--mid)">${item.desc}</div>
+            <div style="font-size:10px;color:var(--mid);margin-top:2px">▼ Ver detalle</div>
+            <div id="${listId}" style="display:none;margin-top:8px;border-top:1px solid rgba(0,0,0,0.07);padding-top:6px;">
+              ${clientRows}
+            </div>
           </div>`;
         }).join('');
       }
