@@ -3669,8 +3669,10 @@ function updateEarnings() {
         const clientId = parts.slice(0, -1).join('_');
         const client = CLIENTS.find(c => c.id === clientId);
         if (!client) return; // Ignore deleted clients
-        const price = getCompletedPrice(key, client);
         const compData = COMPLETED[key];
+        if (compData && typeof compData === 'object' && compData.cancelled) return; // Exclude cancelled
+        if (compData && typeof compData === 'object' && compData.moved) return; // Exclude moved (origin)
+        const price = getCompletedPrice(key, client);
         const metodo = (typeof compData === 'object' && compData.metodo_pago) ? compData.metodo_pago : null;
 
         auditLog.push({
@@ -6040,6 +6042,7 @@ function renderWorkTracker() {
   let totalEarnedMonth = 0;
   const workedDates = new Set();
   
+  const wtAudit = [];
   Object.keys(COMPLETED).forEach(key => {
     const parts = key.split('_');
     const dateStr = parts[parts.length - 1];
@@ -6053,12 +6056,18 @@ function renderWorkTracker() {
       const clientId = parts.slice(0, -1).join('_');
       const client = CLIENTS.find(c => c.id === clientId);
       if (!client) return;
+      const price = getCompletedPrice(key, client);
       completedThisMonth++;
       hoursWorked += client.duracion || 0;
-      totalEarnedMonth += getCompletedPrice(key, client);
+      totalEarnedMonth += price;
       workedDates.add(dateStr);
+      wtAudit.push({ Fecha: dateStr, Cliente: client.nombre, Precio: price, Metodo: (typeof val === 'object' && val.metodo_pago) || '—' });
     }
   });
+  console.group(`🔍 WORK TRACKER AUDIT - ${MESES[month]} ${year}`);
+  console.table(wtAudit.sort((a,b) => a.Fecha.localeCompare(b.Fecha)));
+  console.log(`TOTAL: €${totalEarnedMonth.toFixed(2)} (${wtAudit.length} citas)`);
+  console.groupEnd();
   daysWorked = workedDates.size;
   
   // Calculate avg per day
