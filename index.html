@@ -3667,12 +3667,11 @@ function updateEarnings() {
       year = currentMonthView.getFullYear();
       month = currentMonthView.getMonth();
     } else {
-      // Usamos el viernes (+4) para que semanas que cruzan el inicio de mes
-      // se contabilicen en el mes nuevo
-      const viewedDate = new Date(currentWeekStart);
-      viewedDate.setDate(viewedDate.getDate() + 4);
-      year = viewedDate.getFullYear();
-      month = viewedDate.getMonth();
+      // Usamos el lunes (primer día de la semana) para que las semanas que cruzan
+      // el fin de mes muestren el mes al que pertenece el inicio de esa semana,
+      // de modo que los días finales del mes aparezcan en el total correcto.
+      year = currentWeekStart.getFullYear();
+      month = currentWeekStart.getMonth();
     }
     
     // --- AUDIT LOG PARA VERIFICAR CADA CENTAVO ---
