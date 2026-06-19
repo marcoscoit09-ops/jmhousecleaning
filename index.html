@@ -3743,25 +3743,25 @@ function updateEarnings() {
         if (porMetodo.sin_especificar > 0) {
           metodoItems.push({ emoji: '❓', label: 'Sin especificar', key: 'sin_especificar', color: '#8e8e93', desc: 'Sin método registrado' });
         }
-        // Build per-method client breakdown
-        const clientesPorMetodo = { efectivo: {}, transferencia: {}, helpling: {}, sin_especificar: {} };
+        // Build per-method entry list (individual payments with date)
+        const entradasPorMetodo = { efectivo: [], transferencia: [], helpling: [], sin_especificar: [] };
         auditLog.forEach(log => {
           const mk = log.MetodoPago === 'efectivo' ? 'efectivo'
             : log.MetodoPago === 'transferencia' ? 'transferencia'
             : log.MetodoPago === 'helpling' ? 'helpling' : 'sin_especificar';
-          const name = log.Nombre.split(' - ')[0];
-          if (!clientesPorMetodo[mk][name]) clientesPorMetodo[mk][name] = 0;
-          clientesPorMetodo[mk][name] += log.Monto;
+          const [y, m, d] = log.FechaCobro.split('-');
+          entradasPorMetodo[mk].push({ name: log.Nombre.split(' - ')[0], fecha: `${d}/${m}`, monto: log.Monto, fechaSort: log.FechaCobro });
         });
 
         liquidezList.innerHTML = metodoItems.map(item => {
           const val = porMetodo[item.key];
           if (val === 0) return '';
-          const clientes = clientesPorMetodo[item.key];
-          const clientRows = Object.keys(clientes).sort((a,b) => clientes[b]-clientes[a]).map(name =>
-            `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);">
-              <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%">${name}</span>
-              <span style="font-size:12px;font-weight:700;color:${item.color};flex-shrink:0">€${clientes[name].toFixed(2)}</span>
+          const entradas = entradasPorMetodo[item.key].sort((a,b) => a.fechaSort.localeCompare(b.fechaSort));
+          const clientRows = entradas.map(e =>
+            `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.05);gap:6px;">
+              <span style="font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${e.name}</span>
+              <span style="font-size:11px;color:var(--mid);flex-shrink:0">${e.fecha}</span>
+              <span style="font-size:12px;font-weight:700;color:${item.color};flex-shrink:0">€${e.monto.toFixed(2)}</span>
             </div>`
           ).join('');
           const cardId = `liq-card-${item.key}`;
