@@ -3649,10 +3649,11 @@ function updateEarnings() {
       
       CLIENTS.forEach(client => {
         const compKey = `${client.id}_${dateStr}`;
-        if (clientAppliesToDate(client, dayDate) && COMPLETED[compKey]) {
-          totalEarned += getCompletedPrice(compKey, client);
-          completedCount++;
-        }
+        const compData = COMPLETED[compKey];
+        if (!compData) return;
+        if (typeof compData === 'object' && (compData.cancelled || compData.moved)) return;
+        totalEarned += getCompletedPrice(compKey, client);
+        completedCount++;
       });
     }
 
