@@ -6906,14 +6906,54 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== INIT =====
+function auditarSemanasJunio() {
+  const year = 2026, month = 6;
+  // Get Monday of the first week that overlaps June
+  const firstDay = new Date(year, month - 1, 1);
+  const offset = (firstDay.getDay() + 6) % 7; // days since Monday
+  const firstMonday = new Date(firstDay);
+  firstMonday.setDate(firstDay.getDate() - offset);
+
+  const rows = [];
+  let cursor = new Date(firstMonday);
+  while (cursor.getMonth() <= month - 1 || cursor.getFullYear() < year) {
+    const weekStart = new Date(cursor);
+    const weekEnd = new Date(cursor); weekEnd.setDate(weekEnd.getDate() + 6);
+    // Only process weeks that touch June
+    if (weekEnd.getFullYear() > year || (weekEnd.getFullYear() === year && weekEnd.getMonth() > month - 1)) break;
+    if (weekStart.getFullYear() === year && weekStart.getMonth() > month - 1) break;
+
+    let correctTotal = 0, bugTotal = 0, movedCount = 0, cancelledCount = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart); d.setDate(d.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      CLIENTS.forEach(client => {
+        const key = `${client.id}_${dateStr}`;
+        const val = COMPLETED[key];
+        if (!val) return;
+        const isCancelled = typeof val === 'object' && val.cancelled;
+        const isMoved = typeof val === 'object' && val.moved;
+        if (isCancelled) { cancelledCount++; bugTotal += 0; }
+        else if (isMoved) { movedCount++; bugTotal += getCompletedPrice(key, client); }
+        else { const p = getCompletedPrice(key, client); correctTotal += p; bugTotal += p; }
+      });
+    }
+    const label = `${String(weekStart.getDate()).padStart(2,'0')}/${String(weekStart.getMonth()+1).padStart(2,'0')} – ${String(weekEnd.getDate()).padStart(2,'0')}/${String(weekEnd.getMonth()+1).padStart(2,'0')}`;
+    rows.push({ Semana: label, 'Total correcto': `€${correctTotal.toFixed(2)}`, 'Total con bug': `€${bugTotal.toFixed(2)}`, 'Inflado por': `€${(bugTotal - correctTotal).toFixed(2)}`, 'Citas movidas': movedCount, 'Citas canceladas': cancelledCount });
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  console.group('📊 AUDIT SEMANAS JUNIO 2026 — impacto del bug semanal (ya corregido)');
+  console.table(rows);
+  console.groupEnd();
+}
+
 function init() {
   updateClock();
   setInterval(updateClock, 1000);
-  // Update today dashboard countdown every minute
   setInterval(renderTodayDashboard, 60000);
   refreshAll();
-  // Start Firebase sync
   initFirebase();
+  setTimeout(auditarSemanasJunio, 1500);
 }
 
 init();
