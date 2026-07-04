@@ -6201,6 +6201,7 @@ function renderMonthlyReport() {
     if (cy === year && cm === month + 1) {
       const val = COMPLETED[key];
       const isCancelled = val && typeof val === 'object' && val.cancelled;
+      const isMoved = val && typeof val === 'object' && val.moved;
       if (isCancelled) {
         totalCancelled++;
         // Track cancelled per client
@@ -6215,6 +6216,7 @@ function renderMonthlyReport() {
         }
         return;
       }
+      if (isMoved) return; // se cuenta en su nueva_fecha, no acá (evita duplicar ingresos)
       const clientId = parts.slice(0, -1).join('_');
       const client = CLIENTS.find(c => c.id === clientId);
       if (!client) return;
@@ -6458,6 +6460,7 @@ function renderMonthlyReport() {
         if (tcy === ty && tcm === tm+1) {
           const v = COMPLETED[key];
           if (v && typeof v === 'object' && v.cancelled) return;
+          if (v && typeof v === 'object' && v.moved) return; // se cuenta en su nueva_fecha
           const cId = parts.slice(0,-1).join('_');
           const cl = CLIENTS.find(c => c.id === cId);
           if (cl) tinc += getCompletedPrice(key, cl);
@@ -6501,6 +6504,7 @@ async function downloadReportPDF() {
           totalCancelled++;
           return;
         }
+        if (val && typeof val === 'object' && val.moved) return; // se cuenta en su nueva_fecha
         const clientId = parts.slice(0, -1).join('_');
         const client = CLIENTS.find(c => c.id === clientId);
         if (!client) return;
