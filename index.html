@@ -3258,7 +3258,7 @@ function mostrarModalMoverCita(clientId, dateStr) {
     </div>
     <div style="margin-top:16px;">
       <label style="font-size:12px;font-weight:600;color:var(--mid);display:block;margin-bottom:6px;">Nueva fecha</label>
-      <input type="date" id="moverCitaFecha" value="${fechaActual}" min="${dateStr}"
+      <input type="date" id="moverCitaFecha" value="${fechaActual}"
         style="width:100%;padding:12px;border:1.5px solid var(--light);border-radius:8px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;"
         oninput="this.style.borderColor='var(--warning)'">
     </div>
@@ -4847,7 +4847,11 @@ function renderTodayDashboard() {
   today.setHours(0,0,0,0);
   
   // Siempre muestra las citas de HOY, sin importar qué semana se esté viendo
-  const todayClients = CLIENTS.filter(c => clientAppliesToDate(c, today))
+  const todayDateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const regularTodayClients = CLIENTS.filter(c => clientAppliesToDate(c, today));
+  const movedHereEntries = getMovedToClients(todayDateStr).filter(({ client }) => !regularTodayClients.find(c => c.id === client.id));
+  const movedHereMap = new Map(movedHereEntries.map(({ client, originalDateStr }) => [client.id, originalDateStr]));
+  const todayClients = [...regularTodayClients, ...movedHereEntries.map(e => e.client)]
     .sort((a,b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
   
   const hour = now.getHours();
@@ -4868,6 +4872,7 @@ function renderTodayDashboard() {
       const isCancelled = !!(compData && typeof compData === 'object' && compData.cancelled);
       const isMoved = !!(compData && typeof compData === 'object' && compData.moved);
       const isDone = !!compData && !isCancelled && !isMoved;
+      const movedFromDateStr = movedHereMap.get(client.id);
 
       // Determine if this is the next upcoming appointment
       const [sh,sm] = (client.horaInicio || '00:00').split(':').map(Number);
@@ -4901,6 +4906,7 @@ function renderTodayDashboard() {
         <div class="today-card-time">${client.horaInicio || ''}</div>
         <div>
           <div class="today-card-name">${client.nombre || ''}</div>
+          ${movedFromDateStr && !isDone && !isCancelled && !isMoved ? `<div class="apt-moved-here-badge">↩ Reagendada desde ${movedFromDateStr.split('-')[2]}/${movedFromDateStr.split('-')[1]}</div>` : ''}
           <div class="today-card-meta">
             <span style="display:flex;align-items:center;gap:6px">
               📍 ${client.direccion}
@@ -5011,7 +5017,10 @@ function openDayRoute(event) {
   if (event) event.preventDefault();
   const today = new Date();
   today.setHours(0,0,0,0);
-  const todayClients = CLIENTS.filter(c => clientAppliesToDate(c, today))
+  const todayDateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const regularTodayClients = CLIENTS.filter(c => clientAppliesToDate(c, today));
+  const movedHereEntries = getMovedToClients(todayDateStr).filter(({ client }) => !regularTodayClients.find(c => c.id === client.id));
+  const todayClients = [...regularTodayClients, ...movedHereEntries.map(e => e.client)]
     .sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
   
   if (todayClients.length === 0) { showToast('No hay citas hoy', 'error'); return; }
