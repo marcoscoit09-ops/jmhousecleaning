@@ -2241,6 +2241,8 @@ body{
 .work-tracker-grid{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;}
 .work-tracker-grid::-webkit-scrollbar{display:none;}
 .work-tracker-card{background:var(--off);border-radius:var(--radius-sm);padding:16px;text-align:center;transition:transform 0.2s,box-shadow 0.2s;flex:1;min-width:140px;scroll-snap-align:start;}
+.work-tracker-card.clickable{cursor:pointer;}
+.work-tracker-card.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08);}
 .wt-icon{font-size:24px;margin-bottom:6px;}
 .wt-num{font-size:26px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--black);}
 .wt-label{font-size:11px;color:var(--mid);margin-top:4px;font-weight:500;}
@@ -2736,6 +2738,19 @@ body{
     </div>
     <div class="admin-body" style="background:#f5f5f7">
       <div id="remindersList" style="padding:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORK TRACKER DETAIL PANEL (Canceladas / Movidas) -->
+<div class="reminders-overlay" id="wtDetailOverlay" onclick="closeWtDetailFromOverlay(event)">
+  <div class="reminders-panel" id="wtDetailPanel" onclick="event.stopPropagation()">
+    <div class="admin-header">
+      <h2 id="wtDetailTitle">Detalle</h2>
+      <button class="admin-close" onclick="closeWtDetail()">✕</button>
+    </div>
+    <div class="admin-body" style="background:#f5f5f7">
+      <div id="wtDetailList" style="padding:16px;"></div>
     </div>
   </div>
 </div>
@@ -6071,6 +6086,53 @@ function renderMonthGrid() {
 }
 
 // ===== WORK TRACKER =====
+let wtCancelledList = [];
+let wtMovedList = [];
+
+function openWtDetail(type) {
+  const title = document.getElementById('wtDetailTitle');
+  const list = document.getElementById('wtDetailList');
+  const items = type === 'cancelled' ? wtCancelledList : wtMovedList;
+  title.textContent = type === 'cancelled' ? '🚫 Citas Canceladas' : '↗ Citas Movidas';
+
+  if (items.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--mid)">
+      <div style="font-size:40px;margin-bottom:12px">🌱</div>
+      <div style="font-size:14px">Sin registros en este periodo.</div>
+    </div>`;
+  } else {
+    list.innerHTML = items.map(it => {
+      const d = it.dateStr.split('-');
+      const dateLabel = `${d[2]}/${d[1]}/${d[0]}`;
+      let extra = '';
+      if (type === 'moved' && it.nueva_fecha) {
+        const nd = it.nueva_fecha.split('-');
+        extra = `<div style="font-size:12px;color:var(--warning);font-weight:600;margin-top:6px">↗ Nueva fecha: ${nd[2]}/${nd[1]}/${nd[0]}</div>`;
+      }
+      return `<div class="booking-card">
+        <div class="booking-card-header">
+          <h4 style="display:flex;align-items:center;gap:8px">
+            <span class="apt-dot" style="background:${it.color}"></span>
+            ${it.nombre}
+          </h4>
+          <div class="date-badge" style="background:var(--mid)">${dateLabel}</div>
+        </div>
+        ${extra}
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('wtDetailOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeWtDetail() {
+  document.getElementById('wtDetailOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeWtDetailFromOverlay(e) {
+  if (e.target.id === 'wtDetailOverlay') closeWtDetail();
+}
+
 function renderWorkTracker() {
   const grid = document.getElementById('workTrackerGrid');
   const ref = calendarView === 'mensual' ? currentMonthView : currentWeekStart;
@@ -6084,9 +6146,12 @@ function renderWorkTracker() {
   let hoursWorked = 0;
   let completedThisMonth = 0;
   let cancelledThisMonth = 0;
+  let movedThisMonth = 0;
   let totalEarnedMonth = 0;
   const workedDates = new Set();
-  
+  const cancelledList = [];
+  const movedList = [];
+
   const wtAudit = [];
   Object.keys(COMPLETED).forEach(key => {
     const parts = key.split('_');
@@ -6096,10 +6161,18 @@ function renderWorkTracker() {
       const val = COMPLETED[key];
       const isCancelled = val && typeof val === 'object' && val.cancelled;
       const isMoved = val && typeof val === 'object' && val.moved;
-      if (isCancelled) { cancelledThisMonth++; return; }
-      if (isMoved) return;
       const clientId = parts.slice(0, -1).join('_');
       const client = CLIENTS.find(c => c.id === clientId);
+      if (isCancelled) {
+        cancelledThisMonth++;
+        if (client) cancelledList.push({ nombre: client.nombre, color: client.color, dateStr });
+        return;
+      }
+      if (isMoved) {
+        movedThisMonth++;
+        if (client) movedList.push({ nombre: client.nombre, color: client.color, dateStr, nueva_fecha: val.nueva_fecha });
+        return;
+      }
       if (!client) return;
       const price = getCompletedPrice(key, client);
       completedThisMonth++;
@@ -6109,6 +6182,10 @@ function renderWorkTracker() {
       wtAudit.push({ Fecha: dateStr, Cliente: client.nombre, Precio: price, Metodo: (typeof val === 'object' && val.metodo_pago) || '—' });
     }
   });
+  cancelledList.sort((a,b) => b.dateStr.localeCompare(a.dateStr));
+  movedList.sort((a,b) => b.dateStr.localeCompare(a.dateStr));
+  wtCancelledList = cancelledList;
+  wtMovedList = movedList;
   console.group(`🔍 WORK TRACKER AUDIT - ${MESES[month]} ${year}`);
   console.table(wtAudit.sort((a,b) => a.Fecha.localeCompare(b.Fecha)));
   console.log(`TOTAL: €${totalEarnedMonth.toFixed(2)} (${wtAudit.length} citas)`);
@@ -6139,11 +6216,17 @@ function renderWorkTracker() {
       <div class="wt-label">Limpiezas</div>
       <div class="wt-sub">Completadas</div>
     </div>
-    ${cancelledThisMonth > 0 ? `<div class="work-tracker-card">
+    ${cancelledThisMonth > 0 ? `<div class="work-tracker-card clickable" onclick="openWtDetail('cancelled')">
       <div class="wt-icon">🚫</div>
       <div class="wt-num" style="color:var(--danger)">${cancelledThisMonth}</div>
       <div class="wt-label">Canceladas</div>
-      <div class="wt-sub">Este mes</div>
+      <div class="wt-sub">Ver detalle ›</div>
+    </div>` : ''}
+    ${movedThisMonth > 0 ? `<div class="work-tracker-card clickable" onclick="openWtDetail('moved')">
+      <div class="wt-icon">↗</div>
+      <div class="wt-num" style="color:var(--warning)">${movedThisMonth}</div>
+      <div class="wt-label">Movidas</div>
+      <div class="wt-sub">Ver detalle ›</div>
     </div>` : ''}
     <div class="work-tracker-card">
       <div class="wt-icon">💰</div>
