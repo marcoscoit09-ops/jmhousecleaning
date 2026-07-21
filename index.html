@@ -1856,6 +1856,7 @@ body{
   gap:12px;
   margin-bottom:24px;
 }
+.analytics-grid-4{grid-template-columns:repeat(4,1fr);}
 .analytics-card{
   background:var(--off);
   border-radius:var(--radius-sm);
@@ -2264,12 +2265,13 @@ body{
 .report-section{margin-bottom:24px;}
 .report-section-title{font-size:14px;font-weight:700;margin-bottom:12px;letter-spacing:-0.01em;display:flex;align-items:center;gap:6px;}
 .report-table{width:100%;border-collapse:collapse;font-size:13px;}
-.report-table th{text-align:left;padding:10px 12px;background:var(--off);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--mid);border-radius:6px;}
-.report-table td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.04);}
+.report-table th{text-align:left;padding:10px 12px;background:var(--off);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--mid);border-radius:6px;white-space:nowrap;}
+.report-table td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.04);white-space:nowrap;}
 .report-table tr:last-child td{border-bottom:none;}
 .report-table .total-row td{font-weight:700;border-top:2px solid var(--black);padding-top:12px;}
 .report-bar-mini{height:6px;background:var(--off);border-radius:4px;overflow:hidden;margin-top:4px;}
 .report-bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease;}
+.report-header-actions{display:flex;gap:8px;align-items:center;}
 .report-month-nav{display:flex;align-items:center;gap:8px;}
 .report-month-nav button{background:var(--off);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:var(--black);}
 .report-month-nav button:hover{background:var(--light);}
@@ -2279,12 +2281,20 @@ body{
 .report-tab{padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--mid);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
 .report-tab:hover{color:var(--black);}
 .report-tab.active{color:var(--black);border-bottom:2px solid var(--black);}
+.report-perf-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
 
 @media(max-width:768px){
   .report-kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .report-perf-grid{grid-template-columns:1fr 1fr;}
   .report-modal{max-width:100%;}
   .month-cal-cell{min-height:70px;padding:4px;}
   .month-cal-apt{font-size:9px;padding:2px 3px;}
+  .report-header{flex-wrap:wrap;gap:12px;padding:20px 20px 14px;}
+  .report-header h2{font-size:17px;}
+  .report-header-actions{width:100%;justify-content:space-between;}
+  .report-tabs{padding:12px 20px 0;gap:6px;}
+  .report-tab{padding:8px 10px;font-size:12px;}
+  .report-body{padding:20px;}
 }
 @media(max-width:480px){
   .month-cal-body{grid-template-columns:repeat(5,1fr);}
@@ -2389,8 +2399,8 @@ body{
       </div>
     </div>
     <div class="earnings-toggle" id="earningsToggle">
-      <button class="active" onclick="setEarningsView('semanal')">Semanal</button>
-      <button onclick="setEarningsView('mensual')">Mensual</button>
+      <button class="active" onclick="setEarningsView('semanal', event)">Semanal</button>
+      <button onclick="setEarningsView('mensual', event)">Mensual</button>
     </div>
   </div>
   <div id="monthlyBreakdown" style="display:none; max-width: 1120px; margin: 0 auto; padding: 16px 40px; background: #FAFAFA; border-top: 1px solid rgba(0,0,0,0.06);">
@@ -2417,8 +2427,8 @@ body{
     <h2 class="section-title">Calendario <em id="calViewLabel">Semanal</em></h2>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="cal-view-toggle" id="calViewToggle">
-        <button class="active" onclick="setCalendarView('semanal')">Semanal</button>
-        <button onclick="setCalendarView('mensual')">Mensual</button>
+        <button class="active" onclick="setCalendarView('semanal', event)">Semanal</button>
+        <button onclick="setCalendarView('mensual', event)">Mensual</button>
       </div>
       <div class="week-nav" id="weekNavControls">
         <button onclick="changeWeek(-1)" title="Semana anterior">‹</button>
@@ -2787,7 +2797,7 @@ body{
           <button onclick="changeReportMonth(1)">›</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div class="report-header-actions">
         <button class="report-download-btn" onclick="downloadReportPDF()">📥 PDF Ejecutivo</button>
         <button class="modal-close" onclick="closeMonthlyReport()">✕</button>
       </div>
@@ -2881,6 +2891,7 @@ const DEFAULT_CLIENTS = [
 ];
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const DIAS_SEMANA_PLURAL = ['Domingos', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábados'];
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -3643,10 +3654,10 @@ function updateStats() {
 }
 
 // ===== EARNINGS =====
-function setEarningsView(view) {
+function setEarningsView(view, event) {
   earningsView = view;
   document.querySelectorAll('#earningsToggle button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event) event.target.classList.add('active');
   updateEarnings();
 }
 
@@ -4051,7 +4062,7 @@ function renderClientCards() {
               <div class="detail-icon">📅</div>
               <div class="detail-info">
                 <span class="detail-label">Frecuencia</span>
-                <span class="detail-value">${FRECUENCIA_LABELS[getFrecuencia(client)]} — ${client.diaNombre}s</span>
+                <span class="detail-value">${FRECUENCIA_LABELS[getFrecuencia(client)]} — ${DIAS_SEMANA_PLURAL[client.dia]}</span>
               </div>
             </div>
           </div>
@@ -4089,7 +4100,7 @@ function getNextAppointment(targetDay, client) {
     
     // If it's today, check if the appointment already passed
     if (offset === 0 && client) {
-      const [h, m] = client.horaFin.split(':').map(Number);
+      const [h, m] = (client.horaFin || '23:59').split(':').map(Number);
       const end = new Date(today);
       end.setHours(h, m, 0, 0);
       if (new Date() > end) continue;
@@ -4139,7 +4150,7 @@ function openClientModal(clientId) {
         <div class="modal-detail-icon" style="background:${client.colorLight}">📅</div>
         <div class="modal-detail-text">
           <span class="modal-detail-label">Día de Limpieza</span>
-          <span class="modal-detail-value">${client.diaNombre}s — ${FRECUENCIA_LABELS[getFrecuencia(client)]}</span>
+          <span class="modal-detail-value">${DIAS_SEMANA_PLURAL[client.dia]} — ${FRECUENCIA_LABELS[getFrecuencia(client)]}</span>
         </div>
       </div>
       <div class="modal-detail">
@@ -5378,7 +5389,7 @@ function renderAnalytics() {
   const nArc = (nPct/100)*C, aArc = (aPct/100)*C;
   
   let html = `
-    <div class="analytics-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+    <div class="analytics-grid analytics-grid-4" style="margin-bottom:20px">
       <div class="analytics-card" style="background:linear-gradient(135deg,rgba(52,199,89,0.06),rgba(52,199,89,0.02))">
         <div class="analytics-card-num" style="color:var(--success)">\u20ac${cur.income}</div>
         <div class="analytics-card-label">Ingresos ${MESES[curMonth]}</div>
@@ -5396,7 +5407,7 @@ function renderAnalytics() {
         <div class="analytics-card-label">vs. Mes Anterior</div>
       </div>
     </div>
-    <div class="analytics-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="analytics-grid analytics-grid-4">
       <div class="analytics-card"><div class="analytics-card-num">${cur.count}</div><div class="analytics-card-label">Limpiezas</div></div>
       <div class="analytics-card"><div class="analytics-card-num">${totalHoursMonth.toFixed(1)}h</div><div class="analytics-card-label">Horas</div></div>
       <div class="analytics-card"><div class="analytics-card-num">${workedDatesMonth.size}</div><div class="analytics-card-label">D\u00edas Trabajados</div></div>
@@ -5976,10 +5987,10 @@ function sendReminderMsg(clientId, method) {
 let calendarView = 'semanal';
 let currentMonthView = new Date();
 
-function setCalendarView(view) {
+function setCalendarView(view, event) {
   calendarView = view;
   document.querySelectorAll('#calViewToggle button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event) event.target.classList.add('active');
   document.getElementById('calViewLabel').textContent = view === 'semanal' ? 'Semanal' : 'Mensual';
   
   if (view === 'semanal') {
@@ -6345,6 +6356,20 @@ function renderMonthlyReport() {
   const prevMonth = month === 0 ? 11 : month - 1;
   const prevYear = month === 0 ? year - 1 : year;
   let prevIncome = 0;
+  Object.keys(COMPLETED).forEach(key => {
+    const parts = key.split('_');
+    const dateStr = parts[parts.length - 1];
+    const [cy, cm] = dateStr.split('-').map(Number);
+    if (cy === prevYear && cm === prevMonth + 1) {
+      const val = COMPLETED[key];
+      if (val && typeof val === 'object' && (val.cancelled || val.moved)) return;
+      const clientId = parts.slice(0, -1).join('_');
+      const client = CLIENTS.find(c => c.id === clientId);
+      if (!client) return;
+      prevIncome += getCompletedPrice(key, client);
+    }
+  });
+  const incomeChange = prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome * 100).toFixed(1) : '0.0';
   const sortedClients = Object.values(clientBreakdown).sort((a, b) => b.income - a.income);
   const maxClientIncome = sortedClients.length > 0 ? sortedClients[0].income : 1;
   
@@ -6444,6 +6469,7 @@ function renderMonthlyReport() {
       <!-- Client Breakdown Table -->
       <div class="report-section">
         <div class="report-section-title">👥 Desglose y Rentabilidad por Cliente</div>
+        <div style="overflow-x:auto">
         <table class="report-table">
           <thead><tr>
             <th>Cliente</th>
@@ -6478,6 +6504,7 @@ function renderMonthlyReport() {
         <td style="text-align:right;color:var(--success)"><strong>€${parseFloat(totalIncome.toFixed(2))}</strong></td>
         <td style="text-align:right"><strong>100%</strong></td>
       </tr></tbody></table>
+        </div>
       </div>`;
 
   } else if (activeReportTab === 'operaciones') {
@@ -6506,7 +6533,7 @@ function renderMonthlyReport() {
       <!-- Performance Metrics -->
       <div class="report-section">
         <div class="report-section-title">📊 Rendimiento del Tiempo</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="report-perf-grid">
           <div style="background:linear-gradient(135deg,rgba(52,199,89,0.06),rgba(52,199,89,0.02));padding:18px;border-radius:14px;text-align:center;border:1px solid rgba(52,199,89,0.1)">
             <div style="font-size:20px;margin-bottom:4px">💵</div>
             <div style="font-size:22px;font-weight:800;letter-spacing:-0.03em;color:var(--success)">€${parseFloat(avgPerDay.toFixed(2))}</div>
